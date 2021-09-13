@@ -105,6 +105,12 @@ SECTIONS
         . = ALIGN(4);
     } > FLASH
 
+    .note.gnu.build-id :
+    {
+        __start_gnu_build_id_start = .;
+        KEEP(*(.note.gnu.build-id))
+    } > FLASH
+
 
     .ARM.extab :
     {
@@ -163,6 +169,7 @@ SECTIONS
         . = ALIGN(4);
         __bssnz_start__ = .;
         *(.bss.core.nz*)
+        *(.mflt.core.nz*)
         . = ALIGN(4);
         __bssnz_end__ = .;
     } > RAM
