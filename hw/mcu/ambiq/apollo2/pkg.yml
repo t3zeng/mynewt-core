@@ -25,6 +25,13 @@ pkg.keywords:
     - ambiq
     - apollo2
 
+pkg.cflags:
+    - '-DAM_PART_APOLLO2'
+
+pkg.src_dirs:
+    - "ext/AmbiqSuite/utils/"
+    - "ext/AmbiqSuite/mcu/"
+
 pkg.deps:
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/hw/mcu/ambiq"

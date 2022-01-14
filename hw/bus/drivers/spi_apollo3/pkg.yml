@@ -17,19 +17,12 @@
 # under the License.
 #
 
-pkg.name: hw/mcu/ambiq
-pkg.description: MCU definitions for Ambiq Apollo chip
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
+pkg.name: hw/bus/drivers/spi_apollo3
+pkg.description: SPI bus driver using Apollo 3 IOM SPI interface
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-    - ambiq
-    - apollo
-    - apollo2
-    - apollo3
-
-pkg.cflags:
-    - '-Wno-enum-compare'
 
 pkg.deps:
-    - "@apache-mynewt-core/hw/hal"
-    - "@apache-mynewt-core/hw/cmsis-core"
+    - hw/bus
+    - hw/bus/drivers/spi_common

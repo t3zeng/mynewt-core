@@ -17,19 +17,39 @@
 # under the License.
 #
 
-pkg.name: hw/mcu/ambiq
-pkg.description: MCU definitions for Ambiq Apollo chip
+pkg.name: hw/mcu/ambiq/apollo3
+pkg.description: MCU definition for Ambiq Apollo MCUs
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
     - ambiq
-    - apollo
-    - apollo2
     - apollo3
 
+pkg.type: sdk
+
 pkg.cflags:
-    - '-Wno-enum-compare'
+    - '-DAM_PART_APOLLO3'
 
 pkg.deps:
     - "@apache-mynewt-core/hw/hal"
+    - "@apache-mynewt-core/hw/mcu/ambiq"
     - "@apache-mynewt-core/hw/cmsis-core"
+
+pkg.deps.ADC_0:
+    - "@apache-mynewt-core/hw/drivers/adc/adc_apollo3"
+
+pkg.deps.BUS_DRIVER_PRESENT:
+    - "@apache-mynewt-core/hw/bus/drivers/spi_apollo3"
+    - "@apache-mynewt-core/hw/bus/drivers/i2c_hal"
+
+pkg.deps.BLE_CONTROLLER:
+    - "@apache-mynewt-nimble/nimble/drivers/apollo3"
+
+pkg.deps.UART_0:
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
+
+pkg.deps.UART_1:
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
+
+    
+    
