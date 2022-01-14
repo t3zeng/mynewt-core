@@ -1,4 +1,3 @@
-#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -17,19 +16,8 @@
 # under the License.
 #
 
-pkg.name: hw/mcu/ambiq
-pkg.description: MCU definitions for Ambiq Apollo chip
-pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-    - ambiq
-    - apollo
-    - apollo2
-    - apollo3
-
-pkg.cflags:
-    - '-Wno-enum-compare'
-
-pkg.deps:
-    - "@apache-mynewt-core/hw/hal"
-    - "@apache-mynewt-core/hw/cmsis-core"
+syscfg.defs:
+    SPI_APOLLO3_USE_NOBLOCK:
+        description: >
+            When enabled, bus uses noblock read/write interface on SPI.
+        value: 0
