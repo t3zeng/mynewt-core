@@ -19,7 +19,7 @@
 
 repo.name: apache-mynewt-core
 repo.versions:
-    "0.0.0": "master"
+    "0.0.0": "tian-playground"
     "0.0.1": "master"
     "0.7.9": "mynewt_0_8_0_b2_tag"
     "0.8.0": "mynewt_0_8_0_tag"

@@ -45,7 +45,7 @@
 //*****************************************************************************
 #include <stdint.h>
 #include <stdbool.h>
-#include <am_mcu_apollo.h>
+#include "am_mcu_apollo.h"
 #include <am_util.h>
 
 #include "am_util_stxetx.h"

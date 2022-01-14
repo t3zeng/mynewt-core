@@ -17,19 +17,22 @@
 # under the License.
 #
 
-pkg.name: hw/mcu/ambiq
-pkg.description: MCU definitions for Ambiq Apollo chip
+pkg.name: hw/bsp/apollo3_edge
+pkg.type: bsp
+pkg.description: BSP definition for the Ambiq Apollo3 Edge
 pkg.author: "Apache Mynewt <dev@mynewt.incubator.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
-    - ambiq
-    - apollo
-    - apollo2
     - apollo3
+    - ambiq
+    - edge
 
-pkg.cflags:
-    - '-Wno-enum-compare'
+pkg.cflags.HARDFLOAT:
+    - -mfloat-abi=hard -mfpu=fpv4-sp-d16
 
 pkg.deps:
-    - "@apache-mynewt-core/hw/hal"
-    - "@apache-mynewt-core/hw/cmsis-core"
+    - "@apache-mynewt-core/hw/mcu/ambiq/apollo3"
+    - "@apache-mynewt-core/libc/baselibc"
+
+pkg.deps.UART_0:
+    - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
