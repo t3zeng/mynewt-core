@@ -17,7 +17,7 @@
  */
 MEMORY
 {
-  FLASH (rx) : ORIGIN = 0x00008000, LENGTH = 0x38000
+  FLASH (rx) : ORIGIN = 0x00000000, LENGTH = 0xC000
 
   /* NOTE: The last 8 bytes of SRAM are intentionally excluded.  The Apollo3's
    * in-ROM boot loader crashes when the initial stack pointer is at the end of
@@ -27,5 +27,5 @@ MEMORY
   RAM (rwx) : ORIGIN = 0x10000000, LENGTH = 0x5fff8
 }
 
-/* This linker script is used for images and thus contains an image header */
-_imghdr_size = 0x20;
+/* The bootloader does not contain an image header */
+_imghdr_size = 0x0;

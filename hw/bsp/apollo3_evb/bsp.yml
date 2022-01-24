@@ -25,13 +25,13 @@ bsp.maker: "Ambiq micro"
 bsp.arch: cortex_m4
 bsp.compiler: "@apache-mynewt-core/compiler/arm-none-eabi-m4"
 bsp.linkerscript:
-    - "@apache-mynewt-core/hw/bsp/apollo3_edge/apollo3.ld"
+    - "@apache-mynewt-core/hw/bsp/apollo3_evb/apollo3.ld"
     - "@apache-mynewt-core/hw/mcu/ambiq/apollo3/apollo3.ld"
 bsp.linkerscript.BOOT_LOADER.OVERWRITE:
-    - "@apache-mynewt-core/hw/bsp/apollo3_edge/boot-apollo3.ld"
+    - "@apache-mynewt-core/hw/bsp/apollo3_evb/boot-apollo3.ld"
     - "@apache-mynewt-core/hw/mcu/ambiq/apollo3/apollo3.ld"
-bsp.downloadscript: "@apache-mynewt-core/hw/bsp/apollo3_edge/apollo3_edge_download.sh"
-bsp.debugscript: "@apache-mynewt-core/hw/bsp/apollo3_edge/apollo3_edge_debug.sh"
+bsp.downloadscript: "@apache-mynewt-core/hw/bsp/apollo3_evb/apollo3_evb_download.sh"
+bsp.debugscript: "@apache-mynewt-core/hw/bsp/apollo3_evb/apollo3_evb_debug.sh"
 
 bsp.flash_map:
     areas:
@@ -39,14 +39,14 @@ bsp.flash_map:
         FLASH_AREA_BOOTLOADER:
             device: 0
             offset: 0x00000000
-            size: 24kB
+            size: 48kB
         FLASH_AREA_IMAGE_0:
             device: 0
-            offset: 0x00008000
+            offset: 0x0000c000
             size: 224kB
         FLASH_AREA_IMAGE_1:
             device: 0
-            offset: 0x00040000
+            offset: 0x00044000
             size: 224kB
 
         ###
@@ -55,17 +55,17 @@ bsp.flash_map:
 
         FLASH_AREA_IMAGE_SCRATCH:
             device: 0
-            offset: 0x0007b000
+            offset: 0x0007c000
             size: 8kB
 
         # User areas.
         FLASH_AREA_REBOOT_LOG:
             user_id: 0
             device: 0
-            offset: 0x00006000
-            size: 8kB
+            offset: 0x0007e000
+            size: 16kB
         FLASH_AREA_NFFS:
             user_id: 1
             device: 0
-            offset: 0x0007d000
+            offset: 0x00082000
             size: 16kB
