@@ -17,7 +17,7 @@
  */
 MEMORY
 {
-  FLASH (rx) : ORIGIN = 0x0000C000, LENGTH = 0x38000
+  FLASH (rx) : ORIGIN = 0x00014000, LENGTH = 0x38000
 
   /* NOTE: The last 8 bytes of SRAM are intentionally excluded.  The Apollo3's
    * in-ROM boot loader crashes when the initial stack pointer is at the end of
