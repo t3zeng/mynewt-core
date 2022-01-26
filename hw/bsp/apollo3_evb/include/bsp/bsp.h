@@ -35,8 +35,6 @@ extern "C" {
 
 extern uint8_t _ram_start;
 
-#define LED_BLINK_PIN   46
-
 #define RAM_SIZE        (384 * 1024)
 
 /* UART */

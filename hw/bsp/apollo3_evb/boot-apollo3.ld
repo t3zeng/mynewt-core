@@ -17,6 +17,10 @@
  */
 MEMORY
 {
+  /*
+   * Ambiq SBL cannot be removed by customers and will start programs at 0xc000
+   * Ambiq customer bootloaders can be placed hereß
+   */
   FLASH (rx) : ORIGIN = 0x0000c000, LENGTH = 0x8000
 
   /* NOTE: The last 8 bytes of SRAM are intentionally excluded.  The Apollo3's

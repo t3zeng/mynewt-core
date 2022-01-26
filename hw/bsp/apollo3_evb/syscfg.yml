@@ -21,80 +21,246 @@ syscfg.defs:
     BSP_APOLLO3:
         description: 'Set to indicate that BSP has the APOLLO3 processor'
         value: 1
+    
+    BUTTON_0_PIN:
+        description: 'Pin for BUTTON0'
+        value: 16
+    BUTTON_1_PIN:
+        description: 'Pin for BUTTON1'
+        value: 18
+    BUTTON_2_PIN:
+        description: 'Pin for BUTTON2'
+        value: 19
+    
+    LED_0_PIN:
+        description: 'Pin for LED0'
+        value: 10
+    LED_1_PIN:
+        description: 'Pin for LED1'
+        value: 30
+    LED_2_PIN:
+        description: 'Pin for LED2'
+        value: 15
+    LED_3_PIN:
+        description: 'Pin for LED3'
+        value: 14
+    LED_4_PIN:
+        description: 'Pin for LED4'
+        value: 17
+        
     UART_0:
         description: 'Whether to enable UART0'
         value: 1
     UART_0_PIN_TX:
         description: 'TX pin for UART0'
-        value: 48
+        value: 22
     UART_0_PIN_RX:
         description: 'RX pin for UART0'
-        value: 49
+        value: 23
     UART_0_PIN_RTS:
         description: 'RTS pin for UART0'
-        value: 41
+        value: 37
     UART_0_PIN_CTS:
         description: 'CTS pin for UART0'
         value: 38
-
+    
+    UART_1:
+        description: 'Whether to enable UART1'
+        value: 1
+    UART_1_PIN_TX:
+        description: 'TX pin for UART1'
+        value: 35
+    UART_1_PIN_RX:
+        description: 'RX pin for UART1'
+        value: 36
+    UART_1_PIN_RTS:
+        description: 'RTS pin for UART1'
+        value: 44
+    UART_1_PIN_CTS:
+        description: 'CTS pin for UART1'
+        value: 45
+    
+    SPI_0_MASTER:
+        description: 'Whether to enable SPI Master 0'
+        value: 0
+        restrictions:
+            - '!I2C_0_MASTER'
+    SPI_0_PIN_CS:
+        description: 'SPI Chip Select pin for IO Master 0'
+        value: 11
+    SPI_0_PIN_CS3:
+        description: 'SPI Chip Select pin for IO Master 0'
+        value: 15
     SPI_0_MASTER_PIN_SCK:
-        description: 'SCK pin for SPI_0_MASTER'
+        description: 'SPI SCK pin for IO Master 0'
         value:  5
     SPI_0_MASTER_PIN_MOSI:
-        description: 'MOSI pin for SPI_0_MASTER'
+        description: 'SPI MOSI pin for IO Master 0'
         value:  7
     SPI_0_MASTER_PIN_MISO:
-        description: 'MISO pin for SPI_0_MASTER'
+        description: 'SPI MISO pin for IO Master 0'
         value:  6
-
+    
+    I2C_0_MASTER:
+        description: 'Whether to enable I2C Master 0'
+        value: 0
+        restrictions:
+            - '!SPI_0_MASTER'
+    I2C_0_PIN_SCL:
+        description: 'I2C SCL pin for IO Master 0'
+        value:  5
+    I2C_0_PIN_SDA:
+        description: 'I2C SDA pin for IO Master 0'
+        value:  6
+    
+    SPI_1_MASTER:
+        description: 'Whether to enable SPI Master 1'
+        value: 0
+        restrictions:
+            - '!I2C_1_MASTER'
+    SPI_1_PIN_CS:
+        description: 'SPI Chip Select pin for IO Master 1'
+        value: 14
     SPI_1_MASTER_PIN_SCK:
-        description: 'SCK pin for SPI_1_MASTER'
+        description: 'SPI SCK pin for IO Master 1'
         value:  8
     SPI_1_MASTER_PIN_MOSI:
-        description: 'MOSI pin for SPI_1_MASTER'
+        description: 'SPI MOSI pin for IO Master 1'
         value:  10
     SPI_1_MASTER_PIN_MISO:
-        description: 'MISO pin for SPI_1_MASTER'
+        description: 'SPI MISO pin for IO Master 1'
+        value:  9
+    
+    I2C_1_MASTER:
+        description: 'Whether to enable I2C Master 1'
+        value: 0
+        restrictions:
+            - '!SPI_1_MASTER'
+    I2C_1_PIN_SCL:
+        description: 'I2C SCL pin for IO Master 1'
+        value:  8
+    I2C_1_PIN_SDA:
+        description: 'I2C SDA pin for IO Master 1'
         value:  9
 
+    SPI_2_MASTER:
+        description: 'Whether to enable SPI Master 2'
+        value: 0
+        restrictions:
+            - '!I2C_2_MASTER'
+    SPI_2_PIN_CS:
+        description: 'SPI Chip Select pin for IO Master 2'
+        value: 15
     SPI_2_MASTER_PIN_SCK:
-        description: 'SCK pin for SPI_2_MASTER'
+        description: 'SPI SCK pin for IO Master 2'
         value:  27
     SPI_2_MASTER_PIN_MOSI:
-        description: 'MOSI pin for SPI_2_MASTER'
+        description: 'SPI MOSI pin for IO Master 2'
         value:  28
     SPI_2_MASTER_PIN_MISO:
-        description: 'MISO pin for SPI_2_MASTER'
+        description: 'SPI MISO pin for IO Master 2'
+        value:  25
+    
+    I2C_2_MASTER:
+        description: 'Whether to enable I2C Master 2'
+        value: 0
+        restrictions:
+            - '!SPI_2_MASTER'
+    I2C_2_PIN_SCL:
+        description: 'I2C SCL pin for IO Master 2'
+        value:  27
+    I2C_2_PIN_SDA:
+        description: 'I2C SDA pin for IO Master 2'
         value:  25
 
+    SPI_3_MASTER:
+        description: 'Whether to enable SPI Master 3'
+        value: 0
+        restrictions:
+            - '!I2C_3_MASTER'
+    SPI_3_PIN_CS:
+        description: 'SPI Chip Select pin for IO Master 3'
+        value: 12
     SPI_3_MASTER_PIN_SCK:
-        description: 'SCK pin for SPI_3_MASTER'
+        description: 'SPI SCK pin for IO Master 3'
         value:  42
     SPI_3_MASTER_PIN_MOSI:
-        description: 'MOSI pin for SPI_3_MASTER'
+        description: 'SPI MOSI pin for IO Master 3'
         value:  38
     SPI_3_MASTER_PIN_MISO:
-        description: 'MISO pin for SPI_3_MASTER'
+        description: 'SPI MISO pin for IO Master 3'
+        value:  43
+    
+    I2C_3_MASTER:
+        description: 'Whether to enable I2C Master 3'
+        value: 0
+        restrictions:
+            - '!SPI_3_MASTER'
+    I2C_3_PIN_SCL:
+        description: 'I2C SCL pin for IO Master 3'
+        value:  42
+    I2C_3_PIN_SDA:
+        description: 'I2C SDA pin for IO Master 3'
         value:  43
 
+    SPI_4_MASTER:
+        description: 'Whether to enable SPI Master 4'
+        value: 0
+        restrictions:
+            - '!I2C_4_MASTER'
+    SPI_4_PIN_CS:
+        description: 'SPI Chip Select pin for IO Master 4'
+        value: 13
     SPI_4_MASTER_PIN_SCK:
-        description: 'SCK pin for SPI_4_MASTER'
+        description: 'SPI SCK pin for IO Master 4'
         value:  39
     SPI_4_MASTER_PIN_MOSI:
-        description: 'MOSI pin for SPI_4_MASTER'
+        description: 'SPI MOSI pin for IO Master 4'
         value:  44
     SPI_4_MASTER_PIN_MISO:
-        description: 'MISO pin for SPI_4_MASTER'
+        description: 'SPI MISO pin for IO Master 4'
+        value:  40
+    
+    I2C_4_MASTER:
+        description: 'Whether to enable I2C Master 4'
+        value: 0
+        restrictions:
+            - '!SPI_4_MASTER'
+    I2C_4_PIN_SCL:
+        description: 'I2C SCL pin for IO Master 4'
+        value:  39
+    I2C_4_PIN_SDA:
+        description: 'I2C SDA pin for IO Master 4'
         value:  40
 
+    SPI_5_MASTER:
+        description: 'Whether to enable SPI Master 5'
+        value: 0
+        restrictions:
+            - '!I2C_5_MASTER'
+    SPI_5_PIN_CS:
+        description: 'SPI Chip Select pin for IO Master 5'
+        value: 16
     SPI_5_MASTER_PIN_SCK:
-        description: 'SCK pin for SPI_5_MASTER'
+        description: 'SPI SCK pin for IO Master 5'
         value:  48
     SPI_5_MASTER_PIN_MOSI:
-        description: 'MOSI pin for SPI_5_MASTER'
+        description: 'SPI MOSI pin for IO Master 5'
         value:  47
     SPI_5_MASTER_PIN_MISO:
-        description: 'MISO pin for SPI_5_MASTER'
+        description: 'SPI MISO pin for IO Master 5'
+        value:  49
+    
+    I2C_5_MASTER:
+        description: 'Whether to enable I2C Master 5'
+        value: 0
+        restrictions:
+            - '!SPI_4_MASTER'
+    I2C_5_PIN_SCL:
+        description: 'I2C SCL pin for IO Master 5'
+        value:  48
+    I2C_5_PIN_SDA:
+        description: 'I2C SDA pin for IO Master 5'
         value:  49
 
 syscfg.vals:
