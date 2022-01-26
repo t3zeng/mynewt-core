@@ -44,6 +44,12 @@ struct apollo3_spi_cfg {
     uint8_t ss_pin;
 };
 
+/* I2C configuration (used for both master and slave) */
+struct apollo3_i2c_cfg {
+    uint8_t pin_scl;
+    uint8_t pin_sda;
+};
+
 #define APOLLO3_TIMER_SOURCE_HFRC       1 /* High-frequency RC oscillator. */
 #define APOLLO3_TIMER_SOURCE_XT         2 /* 32.768 kHz crystal oscillator. */
 #define APOLLO3_TIMER_SOURCE_LFRC       3 /* Low-frequency RC oscillator. */

@@ -48,9 +48,6 @@ syscfg.defs:
         description: 'Pin for LED4'
         value: 17
         
-    UART_0:
-        description: 'Whether to enable UART0'
-        value: 1
     UART_0_PIN_TX:
         description: 'TX pin for UART0'
         value: 22
@@ -64,9 +61,6 @@ syscfg.defs:
         description: 'CTS pin for UART0'
         value: 38
     
-    UART_1:
-        description: 'Whether to enable UART1'
-        value: 1
     UART_1_PIN_TX:
         description: 'TX pin for UART1'
         value: 35
@@ -80,11 +74,6 @@ syscfg.defs:
         description: 'CTS pin for UART1'
         value: 45
     
-    SPI_0_MASTER:
-        description: 'Whether to enable SPI Master 0'
-        value: 0
-        restrictions:
-            - '!I2C_0_MASTER'
     SPI_0_PIN_CS:
         description: 'SPI Chip Select pin for IO Master 0'
         value: 11
@@ -101,11 +90,6 @@ syscfg.defs:
         description: 'SPI MISO pin for IO Master 0'
         value:  6
     
-    I2C_0_MASTER:
-        description: 'Whether to enable I2C Master 0'
-        value: 0
-        restrictions:
-            - '!SPI_0_MASTER'
     I2C_0_PIN_SCL:
         description: 'I2C SCL pin for IO Master 0'
         value:  5
@@ -113,11 +97,6 @@ syscfg.defs:
         description: 'I2C SDA pin for IO Master 0'
         value:  6
     
-    SPI_1_MASTER:
-        description: 'Whether to enable SPI Master 1'
-        value: 0
-        restrictions:
-            - '!I2C_1_MASTER'
     SPI_1_PIN_CS:
         description: 'SPI Chip Select pin for IO Master 1'
         value: 14
@@ -131,11 +110,6 @@ syscfg.defs:
         description: 'SPI MISO pin for IO Master 1'
         value:  9
     
-    I2C_1_MASTER:
-        description: 'Whether to enable I2C Master 1'
-        value: 0
-        restrictions:
-            - '!SPI_1_MASTER'
     I2C_1_PIN_SCL:
         description: 'I2C SCL pin for IO Master 1'
         value:  8
@@ -143,11 +117,6 @@ syscfg.defs:
         description: 'I2C SDA pin for IO Master 1'
         value:  9
 
-    SPI_2_MASTER:
-        description: 'Whether to enable SPI Master 2'
-        value: 0
-        restrictions:
-            - '!I2C_2_MASTER'
     SPI_2_PIN_CS:
         description: 'SPI Chip Select pin for IO Master 2'
         value: 15
@@ -161,11 +130,6 @@ syscfg.defs:
         description: 'SPI MISO pin for IO Master 2'
         value:  25
     
-    I2C_2_MASTER:
-        description: 'Whether to enable I2C Master 2'
-        value: 0
-        restrictions:
-            - '!SPI_2_MASTER'
     I2C_2_PIN_SCL:
         description: 'I2C SCL pin for IO Master 2'
         value:  27
@@ -173,11 +137,6 @@ syscfg.defs:
         description: 'I2C SDA pin for IO Master 2'
         value:  25
 
-    SPI_3_MASTER:
-        description: 'Whether to enable SPI Master 3'
-        value: 0
-        restrictions:
-            - '!I2C_3_MASTER'
     SPI_3_PIN_CS:
         description: 'SPI Chip Select pin for IO Master 3'
         value: 12
@@ -191,11 +150,6 @@ syscfg.defs:
         description: 'SPI MISO pin for IO Master 3'
         value:  43
     
-    I2C_3_MASTER:
-        description: 'Whether to enable I2C Master 3'
-        value: 0
-        restrictions:
-            - '!SPI_3_MASTER'
     I2C_3_PIN_SCL:
         description: 'I2C SCL pin for IO Master 3'
         value:  42
@@ -203,11 +157,6 @@ syscfg.defs:
         description: 'I2C SDA pin for IO Master 3'
         value:  43
 
-    SPI_4_MASTER:
-        description: 'Whether to enable SPI Master 4'
-        value: 0
-        restrictions:
-            - '!I2C_4_MASTER'
     SPI_4_PIN_CS:
         description: 'SPI Chip Select pin for IO Master 4'
         value: 13
@@ -221,11 +170,6 @@ syscfg.defs:
         description: 'SPI MISO pin for IO Master 4'
         value:  40
     
-    I2C_4_MASTER:
-        description: 'Whether to enable I2C Master 4'
-        value: 0
-        restrictions:
-            - '!SPI_4_MASTER'
     I2C_4_PIN_SCL:
         description: 'I2C SCL pin for IO Master 4'
         value:  39
@@ -233,11 +177,6 @@ syscfg.defs:
         description: 'I2C SDA pin for IO Master 4'
         value:  40
 
-    SPI_5_MASTER:
-        description: 'Whether to enable SPI Master 5'
-        value: 0
-        restrictions:
-            - '!I2C_5_MASTER'
     SPI_5_PIN_CS:
         description: 'SPI Chip Select pin for IO Master 5'
         value: 16
@@ -251,11 +190,6 @@ syscfg.defs:
         description: 'SPI MISO pin for IO Master 5'
         value:  49
     
-    I2C_5_MASTER:
-        description: 'Whether to enable I2C Master 5'
-        value: 0
-        restrictions:
-            - '!SPI_4_MASTER'
     I2C_5_PIN_SCL:
         description: 'I2C SCL pin for IO Master 5'
         value:  48
@@ -263,9 +197,6 @@ syscfg.defs:
         description: 'I2C SDA pin for IO Master 5'
         value:  49
     
-    MSPI_MASTER:
-        description: 'Whether to enable MSPI'
-        value: 0
     MSPI_CE_0_PIN:
         description: 'MSPI pin for chip enable 0'
         value: 19
@@ -300,11 +231,6 @@ syscfg.defs:
         description: 'MSPI pin for SCK'
         value: 24
     
-    IOS_0_SPI:
-        description: 'Whether to enable IOS0 SPI 0'
-        value: 0
-        restrictions:
-            - '!IOS_0_I2C'
     IOS_CE_PIN:
         description: 'IOS Chip Select'
         value: 3
@@ -318,11 +244,6 @@ syscfg.defs:
         description: 'IOS SCK line'
         value: 0
     
-    IOS_0_I2C:
-        description: 'Whether to enable IOS0 I2C 0'
-        value: 0
-        restrictions:
-            - '!IOS_0_SPI'
     IOS_SCL_PIN:
         description: 'IOS SCL line'
         value: 0

@@ -23,9 +23,10 @@
 #include <hal/hal_bsp.h>
 #include <bsp/bsp.h>
 #include <hal/hal_spi.h>
+#include <hal/hal_i2c.h>
 #include <mcu/hal_apollo3.h>
 
-#if MYNEWT_VAL(UART_0)
+#if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1)
 #include "uart/uart.h"
 #include "uart_hal/uart_hal.h"
 #endif
@@ -37,6 +38,16 @@ static const struct apollo3_uart_cfg os_bsp_uart0_cfg = {
     .suc_pin_rx = MYNEWT_VAL(UART_0_PIN_RX),
     .suc_pin_rts = MYNEWT_VAL(UART_0_PIN_RTS),
     .suc_pin_cts = MYNEWT_VAL(UART_0_PIN_CTS),
+};
+#endif
+
+#if MYNEWT_VAL(UART_1)
+static struct uart_dev os_bsp_uart1;
+static const struct apollo3_uart_cfg os_bsp_uart1_cfg = {
+    .suc_pin_tx = MYNEWT_VAL(UART_1_PIN_TX),
+    .suc_pin_rx = MYNEWT_VAL(UART_1_PIN_RX),
+    .suc_pin_rts = MYNEWT_VAL(UART_1_PIN_RTS),
+    .suc_pin_cts = MYNEWT_VAL(UART_1_PIN_CTS),
 };
 #endif
 
@@ -103,6 +114,48 @@ static const struct apollo3_spi_cfg hal_bsp_spi5m_cfg = {
 };
 #endif
 
+#if MYNEWT_VAL(I2C_0_MASTER)
+static const struct apollo3_i2c_cfg hal_bsp_i2c0m_cfg = {
+    .scl_pin      = MYNEWT_VAL(I2C_0_PIN_SCL),
+    .sda_pin      = MYNEWT_VAL(I2C_0_PIN_SDA),
+};
+#endif
+
+#if MYNEWT_VAL(I2C_1_MASTER)
+static const struct apollo3_i2c_cfg hal_bsp_i2c1m_cfg = {
+    .scl_pin      = MYNEWT_VAL(I2C_1_PIN_SCL),
+    .sda_pin      = MYNEWT_VAL(I2C_1_PIN_SDA),
+};
+#endif
+
+#if MYNEWT_VAL(I2C_2_MASTER)
+static const struct apollo3_i2c_cfg hal_bsp_i2c2m_cfg = {
+    .scl_pin      = MYNEWT_VAL(I2C_2_PIN_SCL),
+    .sda_pin      = MYNEWT_VAL(I2C_2_PIN_SDA),
+};
+#endif
+
+#if MYNEWT_VAL(I2C_3_MASTER)
+static const struct apollo3_i2c_cfg hal_bsp_i2c3m_cfg = {
+    .scl_pin      = MYNEWT_VAL(I2C_3_PIN_SCL),
+    .sda_pin      = MYNEWT_VAL(I2C_3_PIN_SDA),
+};
+#endif
+
+#if MYNEWT_VAL(I2C_4_MASTER)
+static const struct apollo3_i2c_cfg hal_bsp_i2c4m_cfg = {
+    .scl_pin      = MYNEWT_VAL(I2C_4_PIN_SCL),
+    .sda_pin      = MYNEWT_VAL(I2C_4_PIN_SDA),
+};
+#endif
+
+#if MYNEWT_VAL(I2C_5_MASTER)
+static const struct apollo3_i2c_cfg hal_bsp_i2c5m_cfg = {
+    .scl_pin      = MYNEWT_VAL(I2C_5_PIN_SCL),
+    .sda_pin      = MYNEWT_VAL(I2C_5_PIN_SDA),
+};
+#endif
+
 const struct hal_flash *
 hal_bsp_flash_dev(uint8_t id)
 {
@@ -150,6 +203,12 @@ hal_bsp_init(void)
     assert(rc == 0);
 #endif
 
+#if MYNEWT_VAL(UART_1)
+    rc = os_dev_create((struct os_dev *) &os_bsp_uart1, "uart1",
+            OS_DEV_INIT_PRIMARY, 0, uart_hal_init, (void *) &os_bsp_uart1_cfg);
+    assert(rc == 0);
+#endif
+
 #if MYNEWT_VAL(SPI_0_MASTER)
     rc = hal_spi_init(0, (void *)&hal_bsp_spi0m_cfg, HAL_SPI_TYPE_MASTER);
     assert(rc == 0);
@@ -177,6 +236,36 @@ hal_bsp_init(void)
 
 #if MYNEWT_VAL(SPI_5_MASTER)
     rc = hal_spi_init(5, (void *)&hal_bsp_spi5m_cfg, HAL_SPI_TYPE_MASTER);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(I2C_0_MASTER)
+    rc = hal_i2c_init(0, (void *)&hal_bsp_i2c0m_cfg);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(I2C_1_MASTER)
+    rc = hal_i2c_init(1, (void *)&hal_bsp_i2c1m_cfg);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(I2C_2_MASTER)
+    rc = hal_i2c_init(2, (void *)&hal_bsp_i2c2m_cfg);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(I2C_3_MASTER)
+    rc = hal_i2c_init(3, (void *)&hal_bsp_i2c3m_cfg);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(I2C_4_MASTER)
+    rc = hal_i2c_init(4, (void *)&hal_bsp_i2c4m_cfg);
+    assert(rc == 0);
+#endif
+
+#if MYNEWT_VAL(I2C_5_MASTER)
+    rc = hal_i2c_init(5, (void *)&hal_bsp_i2c5m_cfg);
     assert(rc == 0);
 #endif
 }
