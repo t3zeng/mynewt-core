@@ -262,6 +262,101 @@ syscfg.defs:
     I2C_5_PIN_SDA:
         description: 'I2C SDA pin for IO Master 5'
         value:  49
+    
+    MSPI_MASTER:
+        description: 'Whether to enable MSPI'
+        value: 0
+    MSPI_CE_0_PIN:
+        description: 'MSPI pin for chip enable 0'
+        value: 19
+    MSPI_CE_1_PIN:
+        description: 'MSPI pin for chip enable 1'
+        value: 41
+    MSPI_DATA_0_PIN:
+        description: 'MSPI pin for data 0'
+        value: 22
+    MSPI_DATA_1_PIN:
+        description: 'MSPI pin for data 1'
+        value: 26
+    MSPI_DATA_2_PIN:
+        description: 'MSPI pin for data 2'
+        value: 4
+    MSPI_DATA_3_PIN:
+        description: 'MSPI pin for data 3'
+        value: 23
+    MSPI_DATA_4_PIN:
+        description: 'MSPI pin for data 4'
+        value: 0
+    MSPI_DATA_5_PIN:
+        description: 'MSPI pin for data 5'
+        value: 1
+    MSPI_DATA_6_PIN:
+        description: 'MSPI pin for data 6'
+        value: 2
+    MSPI_DATA_7_PIN:
+        description: 'MSPI pin for data 7'
+        value: 3
+    MSPI_SCK_PIN:
+        description: 'MSPI pin for SCK'
+        value: 24
+    
+    IOS_0_SPI:
+        description: 'Whether to enable IOS0 SPI 0'
+        value: 0
+        restrictions:
+            - '!IOS_0_I2C'
+    IOS_CE_PIN:
+        description: 'IOS Chip Select'
+        value: 3
+    IOS_MISO_PIN:
+        description: 'IOS MISO line'
+        value: 2
+    IOS_MOSI_PIN:
+        description: 'IOS MOSI line'
+        value: 1
+    IOS_SCK_PIN:
+        description: 'IOS SCK line'
+        value: 0
+    
+    IOS_0_I2C:
+        description: 'Whether to enable IOS0 I2C 0'
+        value: 0
+        restrictions:
+            - '!IOS_0_SPI'
+    IOS_SCL_PIN:
+        description: 'IOS SCL line'
+        value: 0
+    IOS_SDA_PIN:
+        description: 'IOS SDA line'
+        value: 1
+    
+    PDM_CLK_PIN:
+        description: 'PDM CLK Pin'
+        value: 12
+    PDM_DATA_PIN:
+        description: 'PDM DATA Pin'
+        value: 11
+    
+    SCARD_SCCCLK_PIN:
+        description: 'SCARD SCCCLK Pin'
+        value: 8
+    SCARD_SCCIO_PIN:
+        description: 'SCARD SCCIO Pin'
+        value: 9
+    SCARD_SCCRST_PIN:
+        description: 'SCARD SCCRST Pin'
+        value: 46
+    
+    ITM_SWO_PIN:
+        description: 'ITM Serial Wire Output Pin'
+        value: 41
+
+    SWDCK_PIN:
+        description: 'Cortex Serial Wire DCK Pin'
+        value: 20
+    SWDIO_PIN:
+        description: 'Cortex Serial Wire DIO Pin'
+        value: 21
 
 syscfg.vals:
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
