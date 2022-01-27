@@ -46,8 +46,8 @@ struct apollo3_spi_cfg {
 
 /* I2C configuration (used for both master and slave) */
 struct apollo3_i2c_cfg {
-    uint8_t pin_scl;
-    uint8_t pin_sda;
+    uint8_t scl_pin;
+    uint8_t sda_pin;
 };
 
 #define APOLLO3_TIMER_SOURCE_HFRC       1 /* High-frequency RC oscillator. */

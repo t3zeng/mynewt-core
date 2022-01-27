@@ -360,7 +360,6 @@ hal_spi_config_slave(int spi_num, const struct hal_spi_settings *settings)
  *  |-----------+-------+-------+-------|
  *  | 0:1       | 5     | 6     | 7     |
  *  | 1:1       | 8     | 9     | 10    |
- *  | 2:5       | 0     | 2     | 1     |
  *  | 2:5       | 27    | 28    | 25    |
  *  | 3:5       | 42    | 43    | 38    |
  *  | 4:5       | 39    | 40    | 44    |
@@ -392,9 +391,7 @@ hal_spi_pin_config_master(int spi_num, const struct apollo3_spi_cfg *pins)
 #endif
 #if SPI_2_ENABLED
     case 2:
-        if (sck == 0 && miso == 2 && mosi == 1) {
-            return 5;
-        } else if (sck == 27 && miso == 28 && mosi == 25) {
+        if (sck == 27 && miso == 28 && mosi == 25) {
             return 5;
         } else {
             return -1;
