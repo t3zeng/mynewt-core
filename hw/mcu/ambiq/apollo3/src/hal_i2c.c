@@ -32,8 +32,8 @@
 #undef IOSLAVE
 #undef CLKGEN
 
-/* Pointer array that points to am_hal_iom g_IOMhandles */
-void *g_IOMhandles[AM_REG_IOM_NUM_MODULES];
+/* Pointer array that points to am_hal_iom */
+void *g_i2c_handles[AM_REG_IOM_NUM_MODULES];
 
 static am_hal_iom_config_t g_sIOMI2cDefaultConfig =
 {
@@ -54,7 +54,7 @@ static int
 hal_i2c_pin_config(int i2c_num, const struct apollo3_i2c_cfg *pins)
 {
     switch (i2c_num) {
-#if I2C_0
+#if MYNEWT_VAL(I2C_0)
     case 0:
         if (pins->scl_pin == 5 && pins->sda_pin == 6) {
             return 0;
@@ -62,7 +62,7 @@ hal_i2c_pin_config(int i2c_num, const struct apollo3_i2c_cfg *pins)
             return -1;
         }
 #endif
-#if I2C_1
+#if MYNEWT_VAL(I2C_1)
     case 1:
         if (pins->scl_pin == 8 && pins->sda_pin == 9) {
             return 0;
@@ -70,7 +70,7 @@ hal_i2c_pin_config(int i2c_num, const struct apollo3_i2c_cfg *pins)
             return -1;
         }
 #endif
-#if I2C_2
+#if MYNEWT_VAL(I2C_2)
     case 2:
         if (pins->scl_pin == 27 && pins->sda_pin == 25) {
             return 4;
@@ -78,7 +78,7 @@ hal_i2c_pin_config(int i2c_num, const struct apollo3_i2c_cfg *pins)
             return -1;
         }
 #endif
-#if I2C_3
+#if MYNEWT_VAL(I2C_3)
     case 3:
         if (pins->scl_pin == 42 && pins->sda_pin == 43) {
             return 4;
@@ -86,7 +86,7 @@ hal_i2c_pin_config(int i2c_num, const struct apollo3_i2c_cfg *pins)
             return -1;
         }
 #endif
-#if I2C_4
+#if MYNEWT_VAL(I2C_4)
     case 4:
         if (pins->scl_pin == 39 && pins->sda_pin == 40) {
             return 4;
@@ -94,7 +94,7 @@ hal_i2c_pin_config(int i2c_num, const struct apollo3_i2c_cfg *pins)
             return -1;
         }
 #endif
-#if I2C_5
+#if MYNEWT_VAL(I2C_5)
     case 5:
         if (pins->scl_pin == 48 && pins->sda_pin == 49) {
             return 4;
@@ -116,12 +116,12 @@ int hal_i2c_init_hw(uint8_t i2c_num, const struct hal_i2c_hw_settings *cfg) {
      apollo_i2c_cfg.scl_pin = cfg->pin_scl;
 
     /* Initialize the IOM. */
-    am_hal_iom_initialize(i2c_num, &g_IOMhandles[i2c_num]);
+    am_hal_iom_initialize(i2c_num, &g_i2c_handles[i2c_num]);
 
-    am_hal_iom_power_ctrl(g_IOMhandles[i2c_num], AM_HAL_SYSCTRL_WAKE, false);
+    am_hal_iom_power_ctrl(g_i2c_handles[i2c_num], AM_HAL_SYSCTRL_WAKE, false);
 
     /* Set the required configuration settings for the IOM. */
-    am_hal_iom_configure(g_IOMhandles[i2c_num], &g_sIOMI2cDefaultConfig);
+    am_hal_iom_configure(g_i2c_handles[i2c_num], &g_sIOMI2cDefaultConfig);
 
     /* Configure GPIOs for I2C based on i2c_num */
     pin_cfg = hal_i2c_pin_config(i2c_num, &apollo_i2c_cfg);
@@ -149,12 +149,12 @@ hal_i2c_init(uint8_t i2c_num, void *usercfg)
     struct apollo3_i2c_cfg *cfg = usercfg;
 
     /* Initialize the IOM. */
-    am_hal_iom_initialize(i2c_num, &g_IOMhandles[i2c_num]);
+    am_hal_iom_initialize(i2c_num, &g_i2c_handles[i2c_num]);
 
-    am_hal_iom_power_ctrl(g_IOMhandles[i2c_num], AM_HAL_SYSCTRL_WAKE, false);
+    am_hal_iom_power_ctrl(g_i2c_handles[i2c_num], AM_HAL_SYSCTRL_WAKE, false);
 
     /* Set the required configuration settings for the IOM. */
-    am_hal_iom_configure(g_IOMhandles[i2c_num], &g_sIOMI2cDefaultConfig);
+    am_hal_iom_configure(g_i2c_handles[i2c_num], &g_sIOMI2cDefaultConfig);
 
     /* Configure GPIOs for I2C based on i2c_num */
     pin_cfg = hal_i2c_pin_config(i2c_num, cfg);
@@ -245,7 +245,7 @@ int hal_i2c_config(uint8_t i2c_num, const struct hal_i2c_settings *cfg) {
             return -1;
     }
 
-    am_hal_iom_configure(g_IOMhandles[i2c_num], &iom_cfg);
+    am_hal_iom_configure(g_i2c_handles[i2c_num], &iom_cfg);
 
     return 0;
 }
@@ -267,8 +267,8 @@ hal_i2c_master_write(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
     Transaction.ui32StatusSetClr = 0;
     Transaction.uPeerInfo.ui32I2CDevAddr = pdata->address;
 
-    // g_IOMhandles[i2c_num]->waitTimeout = timeout;
-    am_hal_iom_blocking_transfer(g_IOMhandles[i2c_num], &Transaction);
+    // g_i2c_handles[i2c_num]->waitTimeout = timeout;
+    am_hal_iom_blocking_transfer(g_i2c_handles[i2c_num], &Transaction);
 
     return 0;
 }
@@ -290,8 +290,8 @@ hal_i2c_master_read(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
     Transaction.ui32StatusSetClr = 0;
     Transaction.uPeerInfo.ui32I2CDevAddr = pdata->address;
 
-    // g_IOMhandles[i2c_num]->waitTimeout = timeout;
-    am_hal_iom_blocking_transfer(g_IOMhandles[i2c_num], &Transaction);
+    // g_i2c_handles[i2c_num]->waitTimeout = timeout;
+    am_hal_iom_blocking_transfer(g_i2c_handles[i2c_num], &Transaction);
 
     return 0;
 }
@@ -310,20 +310,20 @@ int hal_i2c_master_probe(uint8_t i2c_num, uint8_t address, uint32_t timeout) {
     Transaction.ui32StatusSetClr = 0;
     Transaction.uPeerInfo.ui32I2CDevAddr = (uint32_t)address;
 
-    // g_IOMhandles[i2c_num]->waitTimeout = timeout;
-    am_hal_iom_blocking_transfer(g_IOMhandles[i2c_num], &Transaction);
+    // g_i2c_handles[i2c_num]->waitTimeout = timeout;
+    am_hal_iom_blocking_transfer(g_i2c_handles[i2c_num], &Transaction);
 
     return 0;
 }
 
 int hal_i2c_enable(uint8_t i2c_num) {
-    am_hal_iom_enable(g_IOMhandles[i2c_num]);
+    am_hal_iom_enable(g_i2c_handles[i2c_num]);
     
     return 0;
 }
 
 int hal_i2c_disable(uint8_t i2c_num) {
-    am_hal_iom_enable(g_IOMhandles[i2c_num]);
+    am_hal_iom_enable(g_i2c_handles[i2c_num]);
     
     return 0;
 }

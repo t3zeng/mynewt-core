@@ -114,42 +114,42 @@ static const struct apollo3_spi_cfg hal_bsp_spi5m_cfg = {
 };
 #endif
 
-#if MYNEWT_VAL(I2C_0_MASTER)
+#if MYNEWT_VAL(I2C_0)
 static const struct apollo3_i2c_cfg hal_bsp_i2c0m_cfg = {
     .scl_pin      = MYNEWT_VAL(I2C_0_PIN_SCL),
     .sda_pin      = MYNEWT_VAL(I2C_0_PIN_SDA),
 };
 #endif
 
-#if MYNEWT_VAL(I2C_1_MASTER)
+#if MYNEWT_VAL(I2C_1)
 static const struct apollo3_i2c_cfg hal_bsp_i2c1m_cfg = {
     .scl_pin      = MYNEWT_VAL(I2C_1_PIN_SCL),
     .sda_pin      = MYNEWT_VAL(I2C_1_PIN_SDA),
 };
 #endif
 
-#if MYNEWT_VAL(I2C_2_MASTER)
+#if MYNEWT_VAL(I2C_2)
 static const struct apollo3_i2c_cfg hal_bsp_i2c2m_cfg = {
     .scl_pin      = MYNEWT_VAL(I2C_2_PIN_SCL),
     .sda_pin      = MYNEWT_VAL(I2C_2_PIN_SDA),
 };
 #endif
 
-#if MYNEWT_VAL(I2C_3_MASTER)
+#if MYNEWT_VAL(I2C_3)
 static const struct apollo3_i2c_cfg hal_bsp_i2c3m_cfg = {
     .scl_pin      = MYNEWT_VAL(I2C_3_PIN_SCL),
     .sda_pin      = MYNEWT_VAL(I2C_3_PIN_SDA),
 };
 #endif
 
-#if MYNEWT_VAL(I2C_4_MASTER)
+#if MYNEWT_VAL(I2C_4)
 static const struct apollo3_i2c_cfg hal_bsp_i2c4m_cfg = {
     .scl_pin      = MYNEWT_VAL(I2C_4_PIN_SCL),
     .sda_pin      = MYNEWT_VAL(I2C_4_PIN_SDA),
 };
 #endif
 
-#if MYNEWT_VAL(I2C_5_MASTER)
+#if MYNEWT_VAL(I2C_5)
 static const struct apollo3_i2c_cfg hal_bsp_i2c5m_cfg = {
     .scl_pin      = MYNEWT_VAL(I2C_5_PIN_SCL),
     .sda_pin      = MYNEWT_VAL(I2C_5_PIN_SDA),
@@ -239,32 +239,32 @@ hal_bsp_init(void)
     assert(rc == 0);
 #endif
 
-#if MYNEWT_VAL(I2C_0_MASTER)
+#if MYNEWT_VAL(I2C_0)
     rc = hal_i2c_init(0, (void *)&hal_bsp_i2c0m_cfg);
     assert(rc == 0);
 #endif
 
-#if MYNEWT_VAL(I2C_1_MASTER)
+#if MYNEWT_VAL(I2C_1)
     rc = hal_i2c_init(1, (void *)&hal_bsp_i2c1m_cfg);
     assert(rc == 0);
 #endif
 
-#if MYNEWT_VAL(I2C_2_MASTER)
+#if MYNEWT_VAL(I2C_2)
     rc = hal_i2c_init(2, (void *)&hal_bsp_i2c2m_cfg);
     assert(rc == 0);
 #endif
 
-#if MYNEWT_VAL(I2C_3_MASTER)
+#if MYNEWT_VAL(I2C_3)
     rc = hal_i2c_init(3, (void *)&hal_bsp_i2c3m_cfg);
     assert(rc == 0);
 #endif
 
-#if MYNEWT_VAL(I2C_4_MASTER)
+#if MYNEWT_VAL(I2C_4)
     rc = hal_i2c_init(4, (void *)&hal_bsp_i2c4m_cfg);
     assert(rc == 0);
 #endif
 
-#if MYNEWT_VAL(I2C_5_MASTER)
+#if MYNEWT_VAL(I2C_5)
     rc = hal_i2c_init(5, (void *)&hal_bsp_i2c5m_cfg);
     assert(rc == 0);
 #endif
