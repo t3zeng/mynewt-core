@@ -260,7 +260,7 @@ hal_i2c_master_write(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
 {
     am_hal_iom_transfer_t       Transaction;
 
-    Transaction.ui32InstrLen    = 1;
+    Transaction.ui32InstrLen    = 0;
     Transaction.ui32Instr       = 0;
     Transaction.eDirection      = AM_HAL_IOM_TX;
     Transaction.ui32NumBytes    = pdata->len;
@@ -283,7 +283,7 @@ hal_i2c_master_read(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
 {
     am_hal_iom_transfer_t       Transaction;
 
-    Transaction.ui32InstrLen    = 1;
+    Transaction.ui32InstrLen    = 0;
     Transaction.ui32Instr       = 0;
     Transaction.eDirection      = AM_HAL_IOM_RX;
     Transaction.ui32NumBytes    = pdata->len;
@@ -303,7 +303,7 @@ hal_i2c_master_read(uint8_t i2c_num, struct hal_i2c_master_data *pdata,
 int hal_i2c_master_probe(uint8_t i2c_num, uint8_t address, uint32_t timeout) {
     am_hal_iom_transfer_t       Transaction;
 
-    Transaction.ui32InstrLen    = 1;
+    Transaction.ui32InstrLen    = 0;
     Transaction.ui32Instr       = 0;
     Transaction.eDirection      = AM_HAL_IOM_RX;
     Transaction.ui32NumBytes    = 0;
