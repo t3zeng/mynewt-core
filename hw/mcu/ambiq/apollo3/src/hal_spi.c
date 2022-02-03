@@ -32,6 +32,42 @@
 #undef IOSLAVE
 #undef CLKGEN
 
+/* Pointer array that points to am_hal_iom */
+void *g_spi_handles[AM_REG_IOM_NUM_MODULES];
+
+#define AM_IOS_TX_BUFSIZE_MAX   1023
+uint8_t g_pui8TxFifoBuffer[AM_IOS_TX_BUFSIZE_MAX];
+
+static am_hal_iom_config_t g_sIOMSpiConfig =
+{
+    .eInterfaceMode = AM_HAL_IOM_SPI_MODE,
+    .ui32ClockFreq = AM_HAL_IOM_4MHZ,
+    .eSpiMode = AM_HAL_IOM_SPI_MODE_0, /* CPOL = 0; CPHA = 0 */
+};
+
+// static am_hal_ios_config_t g_sIOSSpiConfig =
+// {
+//     // Configure the IOS in SPI mode.
+//     .ui32InterfaceSelect = AM_HAL_IOS_USE_SPI,
+
+//     // Eliminate the "read-only" section, so an external host can use the
+//     // entire "direct write" section.
+//     .ui32ROBase = 0x78,
+
+//     // Making the "FIFO" section as big as possible.
+//     .ui32FIFOBase = 0x80,
+
+//     // We don't need any RAM space, so extend the FIFO all the way to the end
+//     // of the LRAM.
+//     .ui32RAMBase = 0x100,
+
+//     // FIFO Threshold - set to half the size
+//     .ui32FIFOThreshold = 0x20,
+
+//     .pui8SRAMBuffer = g_pui8TxFifoBuffer,
+//     .ui32SRAMBufferCap = AM_IOS_TX_BUFSIZE_MAX,
+// };
+
 #define SPI_0_ENABLED (MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_0_SLAVE))
 #define SPI_1_ENABLED (MYNEWT_VAL(SPI_1_MASTER) || MYNEWT_VAL(SPI_1_SLAVE))
 #define SPI_2_ENABLED (MYNEWT_VAL(SPI_2_MASTER) || MYNEWT_VAL(SPI_2_SLAVE))
@@ -65,246 +101,15 @@
     MYNEWT_VAL(SPI_4_SLAVE) ||  \
     MYNEWT_VAL(SPI_5_SLAVE))
 
-#define APOLLO3_SPI_MAX_CHUNK_SZ    64
-#define APOLLO3_SPI_MAX_CHUNK_WORDS (APOLLO3_SPI_MAX_CHUNK_SZ / 4)
-#define APOLLO3_SPI_MAX_TXR_SZ      4095
-
-#define APOLLO3_SPI_OP_NONE         0
-#define APOLLO3_SPI_OP_BLOCKING     1
-#define APOLLO3_SPI_OP_NONBLOCKING  2
-
-/* IRQ handler type */
-typedef void apollo3_spi_irq_handler(void);
-
-struct apollo3_spi {
-    volatile uint8_t op;
-
-    const uint8_t *txbuf;
-    uint8_t *rxbuf;
-    int buf_num_bytes;
-    int buf_off;
-    uint32_t interrupts;
-    uint16_t buf_len;
-    uint8_t prev_num_bytes;
-    uint8_t spi_num;
-    uint8_t spi_type;
-
-    uint8_t enabled:1;
-
-    hal_spi_txrx_cb txrx_cb_func;
-    void *txrx_cb_arg;
-};
-
-static void apollo3_spi_service_master(struct apollo3_spi *spi,
-                                       uint32_t status);
-
-static uint32_t apollo3_spi_fifo[APOLLO3_SPI_MAX_CHUNK_WORDS];
-
-#if SPI_0_ENABLED
-static struct apollo3_spi apollo3_spi0;
-#endif
-#if SPI_1_ENABLED
-static struct apollo3_spi apollo3_spi1;
-#endif
-#if SPI_2_ENABLED
-static struct apollo3_spi apollo3_spi2;
-#endif
-#if SPI_3_ENABLED
-static struct apollo3_spi apollo3_spi3;
-#endif
-#if SPI_4_ENABLED
-static struct apollo3_spi apollo3_spi4;
-#endif
-#if SPI_5_ENABLED
-static struct apollo3_spi apollo3_spi5;
-#endif
-
 static uint32_t
-apollo3_spi_data_mode_to_ios(int spi_mode)
+apollo3_spi_data_mode(int spi_mode)
 {
     switch (spi_mode) {
-        case HAL_SPI_MODE0:     return AM_HAL_IOS_SPIMODE_0;
-        case HAL_SPI_MODE1:     return AM_HAL_IOS_SPIMODE_1;
-        case HAL_SPI_MODE2:     return AM_HAL_IOS_SPIMODE_2;
-        case HAL_SPI_MODE3:     return AM_HAL_IOS_SPIMODE_3;
+        case HAL_SPI_MODE0:     return AM_HAL_IOM_SPI_MODE_0;
+        case HAL_SPI_MODE1:     return AM_HAL_IOM_SPI_MODE_1;
+        case HAL_SPI_MODE2:     return AM_HAL_IOM_SPI_MODE_2;
+        case HAL_SPI_MODE3:     return AM_HAL_IOM_SPI_MODE_3;
         default:                return -1;
-    }
-}
-
-static struct apollo3_spi *
-apollo3_spi_resolve(int spi_num)
-{
-    switch (spi_num) {
-#if SPI_0_ENABLED
-    case 0:
-        return &apollo3_spi0;
-#endif
-#if SPI_1_ENABLED
-    case 1:
-        return &apollo3_spi1;
-#endif
-#if SPI_2_ENABLED
-    case 2:
-        return &apollo3_spi2;
-#endif
-#if SPI_3_ENABLED
-    case 3:
-        return &apollo3_spi3;
-#endif
-#if SPI_4_ENABLED
-    case 4:
-        return &apollo3_spi4;
-#endif
-#if SPI_5_ENABLED
-    case 5:
-        return &apollo3_spi5;
-#endif
-    default:
-        return NULL;
-    }
-}
-
-static int
-apollo3_spi_fifo_count(int spi_num)
-{
-    return AM_BFRn(IOMSTR, spi_num, FIFOPTR, FIFOSIZ);
-}
-
-static int
-apollo3_spi_fifo_space(int spi_num)
-{
-    return APOLLO3_SPI_MAX_CHUNK_SZ - apollo3_spi_fifo_count(spi_num);
-}
-
-static void
-apollo3_spi_block_until_idle(const struct apollo3_spi *spi)
-{
-    while (spi->op != APOLLO3_SPI_OP_NONE) { }
-}
-
-static void
-apollo3_spi_clear_ints(int spi_num)
-{
-    AM_REGn(IOMSTR, spi_num, INTCLR) = 0xffffffff;
-}
-
-static void
-apollo3_spi_disable_ints(struct apollo3_spi *spi)
-{
-    /* Remember currently-enabled interrupts. */
-    assert(spi->interrupts == 0);
-    spi->interrupts = AM_REGn(IOMSTR, spi->spi_num, INTEN);
-
-    /* Disable interrupts. */
-    AM_REGn(IOMSTR, spi->spi_num, INTEN) = 0;
-}
-
-static void
-apollo3_spi_reenable_ints(struct apollo3_spi *spi)
-{
-    AM_REGn(IOMSTR, spi->spi_num, INTEN) = spi->interrupts;
-    spi->interrupts = 0;
-}
-
-static uint32_t
-apollo3_spi_status(int spi_num)
-{
-    uint32_t status;
-
-    status = AM_REGn(IOMSTR, spi_num, INTSTAT);
-    apollo3_spi_clear_ints(spi_num);
-
-    return status;
-}
-
-static void
-apollo3_spi_irqh_x(int spi_num)
-{
-    struct apollo3_spi *spi;
-    uint32_t status;
-
-    status = apollo3_spi_status(spi_num);
-
-    spi = apollo3_spi_resolve(spi_num);
-    assert(spi != NULL);
-
-    switch (spi->spi_type) {
-    case HAL_SPI_TYPE_MASTER:
-        apollo3_spi_service_master(spi, status);
-        break;
-
-    case HAL_SPI_TYPE_SLAVE:
-        /* XXX: Slave unimplemented. */
-        break;
-
-    default:
-        assert(0);
-        break;
-    }
-}
-
-#if SPI_0_ENABLED
-static void apollo3_spi_irqh_0(void) { apollo3_spi_irqh_x(0); }
-#endif
-#if SPI_1_ENABLED
-static void apollo3_spi_irqh_1(void) { apollo3_spi_irqh_x(1); }
-#endif
-#if SPI_2_ENABLED
-static void apollo3_spi_irqh_2(void) { apollo3_spi_irqh_x(2); }
-#endif
-#if SPI_3_ENABLED
-static void apollo3_spi_irqh_3(void) { apollo3_spi_irqh_x(3); }
-#endif
-#if SPI_4_ENABLED
-static void apollo3_spi_irqh_4(void) { apollo3_spi_irqh_x(4); }
-#endif
-#if SPI_5_ENABLED
-static void apollo3_spi_irqh_5(void) { apollo3_spi_irqh_x(5); }
-#endif
-
-static int
-apollo3_spi_irq_info(int spi_num, int *out_irq_num,
-                     apollo3_spi_irq_handler **out_irqh)
-{
-    switch (spi_num) {
-#if SPI_0_ENABLED
-    case 0:
-        *out_irq_num = IOMSTR0_IRQn;
-        *out_irqh = apollo3_spi_irqh_0;
-        return 0;
-#endif
-#if SPI_1_ENABLED
-    case 1:
-        *out_irq_num = IOMSTR1_IRQn;
-        *out_irqh = apollo3_spi_irqh_1;
-        return 0;
-#endif
-#if SPI_2_ENABLED
-    case 2:
-        *out_irq_num = IOMSTR2_IRQn;
-        *out_irqh = apollo3_spi_irqh_2;
-        return 0;
-#endif
-#if SPI_3_ENABLED
-    case 3:
-        *out_irq_num = IOMSTR3_IRQn;
-        *out_irqh = apollo3_spi_irqh_3;
-        return 0;
-#endif
-#if SPI_4_ENABLED
-    case 4:
-        *out_irq_num = IOMSTR4_IRQn;
-        *out_irqh = apollo3_spi_irqh_4;
-        return 0;
-#endif
-#if SPI_5_ENABLED
-    case 5:
-        *out_irq_num = IOMSTR5_IRQn;
-        *out_irqh = apollo3_spi_irqh_5;
-        return 0;
-#endif
-    default:
-        return SYS_EINVAL;
     }
 }
 
@@ -312,49 +117,30 @@ static int
 hal_spi_config_master(int spi_num, const struct hal_spi_settings *settings)
 {
     am_hal_iom_config_t sdk_config;
-    int cpol;
-    int cpha;
-    int rc;
 
-    if (spi_num < 0 || spi_num >= AM_REG_IOMSTR_NUM_MODULES) {
+    if (spi_num < 0 || spi_num >= AM_REG_IOM_NUM_MODULES) {
         return SYS_EINVAL;
     }
 
-    rc = hal_spi_data_mode_breakout(settings->data_mode, &cpol, &cpha);
-    if (rc != 0) {
-        return SYS_EINVAL;
-    }
-
-    am_hal_iom_pwrctrl_enable(spi_num);
-
-    sdk_config.ui32InterfaceMode =
-        AM_HAL_IOM_SPIMODE | AM_REG_IOMSTR_CFG_FULLDUP_FULLDUP;
-    sdk_config.ui32ClockFrequency = settings->baudrate;
-    sdk_config.bSPHA = cpha;
-    sdk_config.bSPOL = cpol;
-    sdk_config.ui8WriteThreshold = 4;
-    sdk_config.ui8ReadThreshold = 60;
-    am_hal_iom_config(spi_num, &sdk_config);
+    sdk_config.eInterfaceMode = AM_HAL_IOM_SPI_MODE;
+    sdk_config.ui32ClockFreq = settings->baudrate;
+    sdk_config.eSpiMode = (am_hal_iom_spi_mode_e)apollo3_spi_data_mode(settings->data_mode);
+    am_hal_iom_configure(g_spi_handles[spi_num], &sdk_config);
 
     return 0;
 }
 
-static int
-hal_spi_config_slave(int spi_num, const struct hal_spi_settings *settings)
-{
-    uint32_t ios_data_mode;
-    uint32_t cfg;
+// static int
+// hal_spi_config_slave(int spi_num, const struct hal_spi_settings *settings)
+// {
+//     if (spi_num < 0 || spi_num >= AM_REG_IOM_NUM_MODULES) {
+//         return SYS_EINVAL;
+//     }
 
-    cfg = AM_REG_IOSLAVE_FIFOCFG_ROBASE(0x78 >> 3);
-    cfg |= AM_REG_IOSLAVE_FIFOCFG_FIFOBASE(0x80 >> 3);
-    cfg |= AM_REG_IOSLAVE_FIFOCFG_FIFOMAX(0x100 >> 3);
+//     am_hal_ios_configure(g_spi_handles[spi_num], &g_sIOSSpiConfig);
 
-    ios_data_mode = apollo3_spi_data_mode_to_ios(settings->data_mode);
-
-    AM_REG(IOSLAVE, CFG) = ios_data_mode;
-    AM_REG(IOSLAVE, FIFOCFG) = cfg;
-    return 0;
-}
+//     return 0;
+// }
 
 /*  | spi:cfg   | sck   | miso  | mosi  |
  *  |-----------+-------+-------+-------|
@@ -439,42 +225,40 @@ hal_spi_pin_config(int spi_num, int master, const struct apollo3_spi_cfg *pins)
 static int
 hal_spi_init_master(int spi_num, const struct apollo3_spi_cfg *cfg)
 {
-    apollo3_spi_irq_handler *irqh;
-    struct apollo3_spi *spi;
     int pin_cfg;
-    int irq_num;
-    int rc;
+    am_hal_gpio_pincfg_t spi_sck_cfg, spi_miso_cfg, spi_mosi_cfg;
 
-    spi = apollo3_spi_resolve(spi_num);
-    if (spi == NULL) {
-        return SYS_EINVAL;
-    }
+    /* Initialize the IOM. */
+    am_hal_iom_initialize(spi_num, &g_spi_handles[spi_num]);
+    
+    am_hal_iom_power_ctrl(g_spi_handles[spi_num], AM_HAL_SYSCTRL_WAKE, false);
 
+    /* Set the required configuration settings for the IOM. */
+    am_hal_iom_configure(g_spi_handles[spi_num], &g_sIOMSpiConfig);
+
+    /* Configure the IOM pins. */
     pin_cfg = hal_spi_pin_config(spi_num, 1, cfg);
     if (pin_cfg == -1) {
         return SYS_EINVAL;
     }
 
-    am_hal_gpio_pin_config(
-        cfg->sck_pin, AM_HAL_GPIO_FUNC(pin_cfg) | AM_HAL_PIN_DIR_INPUT);
-    am_hal_gpio_pin_config(
-        cfg->miso_pin, AM_HAL_GPIO_FUNC(pin_cfg) | AM_HAL_PIN_DIR_INPUT);
-    am_hal_gpio_pin_config(
-        cfg->mosi_pin, AM_HAL_GPIO_FUNC(pin_cfg));
 
-    memset(spi, 0, sizeof *spi);
-    spi->spi_num = spi_num;
-    spi->spi_type = HAL_SPI_TYPE_MASTER;
+    spi_sck_cfg.uFuncSel = pin_cfg;
+    spi_sck_cfg.eDriveStrength = AM_HAL_GPIO_PIN_DRIVESTRENGTH_12MA;
+    spi_sck_cfg.uIOMnum = spi_num;
+    am_hal_gpio_pinconfig(cfg->sck_pin, spi_sck_cfg);
 
-    rc = apollo3_spi_irq_info(spi_num, &irq_num, &irqh);
-    if (rc != 0) {
-        return rc;
-    }
+    spi_miso_cfg.uFuncSel = pin_cfg;
+    spi_miso_cfg.uIOMnum = spi_num;
+    am_hal_gpio_pinconfig(cfg->miso_pin, spi_miso_cfg);
 
-    NVIC_SetVector(irq_num, (uint32_t)irqh);
-    NVIC_SetPriority(irq_num, (1 << __NVIC_PRIO_BITS) - 1);
-    NVIC_ClearPendingIRQ(irq_num);
-    NVIC_EnableIRQ(irq_num);
+    spi_mosi_cfg.uFuncSel = pin_cfg;
+    spi_mosi_cfg.eDriveStrength = AM_HAL_GPIO_PIN_DRIVESTRENGTH_12MA;
+    spi_mosi_cfg.uIOMnum = spi_num;
+    am_hal_gpio_pinconfig(cfg->mosi_pin, spi_mosi_cfg);
+
+    /* Enable the IOM. */
+    am_hal_iom_enable(g_spi_handles[spi_num]);
 
     return 0;
 }
@@ -542,19 +326,15 @@ hal_spi_init(int spi_num, void *cfg, uint8_t spi_type)
 int
 hal_spi_config(int spi_num, struct hal_spi_settings *settings)
 {
-    const struct apollo3_spi *spi;
     int rc;
 
-    spi = apollo3_spi_resolve(spi_num);
-    if (spi == NULL) {
-        return SYS_EINVAL;
-    }
+    rc = hal_spi_config_master(spi_num, settings);
 
-    if (spi->spi_type == HAL_SPI_TYPE_MASTER) {
-        rc = hal_spi_config_master(spi_num, settings);
-    } else {
-        rc = hal_spi_config_slave(spi_num, settings);
-    }
+    // if (spi->spi_type == HAL_SPI_TYPE_MASTER) {
+    //     rc = hal_spi_config_master(spi_num, settings);
+    // } else {
+    //     rc = hal_spi_config_slave(spi_num, settings);
+    // }
 
     return rc;
 }
@@ -571,44 +351,8 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
 int
 hal_spi_enable(int spi_num)
 {
-    struct apollo3_spi *spi;
+    am_hal_iom_enable(g_spi_handles[spi_num]);
 
-    spi = apollo3_spi_resolve(spi_num);
-    if (spi == NULL) {
-        return SYS_EINVAL;
-    }
-
-    if (spi->enabled) {
-        return SYS_EBUSY;
-    }
-
-    switch (spi->spi_type) {
-    case HAL_SPI_TYPE_MASTER:
-        AM_REGn(IOMSTR, spi_num, CFG) |= AM_REG_IOMSTR_CFG_IFCEN(1);
-        AM_REGn(IOMSTR, spi_num, INTEN) = 0xffffffff;
-
-        if (spi_num == 0) {
-            AM_REGn(GPIO, 0, PADKEY) = AM_REG_GPIO_PADKEY_KEYVAL;
-            AM_BFW(GPIO, PADREGB, PAD5INPEN, 1);
-            AM_BFW(GPIO, PADREGB, PAD6INPEN, 1);
-            AM_REGn(GPIO, 0, PADKEY) = 0;
-        } else {
-            AM_REGn(GPIO, 0, PADKEY) = AM_REG_GPIO_PADKEY_KEYVAL;
-            AM_BFW(GPIO, PADREGC, PAD8INPEN, 1);
-            AM_BFW(GPIO, PADREGC, PAD9INPEN, 1);
-            AM_REGn(GPIO, 0, PADKEY) = 0;
-        }
-        break;
-
-    case HAL_SPI_TYPE_SLAVE:
-        AM_REGn(IOSLAVE, spi_num, CFG) |= AM_REG_IOSLAVE_CFG_IFCEN(1);
-        break;
-
-    default:
-        return SYS_EINVAL;
-    }
-
-    spi->enabled = 1;
     return 0;
 }
 
@@ -623,194 +367,7 @@ hal_spi_enable(int spi_num)
 int
 hal_spi_disable(int spi_num)
 {
-    struct apollo3_spi *spi;
-
-    spi = apollo3_spi_resolve(spi_num);
-    if (spi == NULL) {
-        return SYS_EINVAL;
-    }
-
-    switch (spi->spi_type) {
-    case HAL_SPI_TYPE_MASTER:
-        apollo3_spi_block_until_idle(spi);
-        AM_REGn(IOMSTR, spi_num, CFG) &= ~AM_REG_IOMSTR_CFG_IFCEN(1);
-        spi->enabled = 0;
-        return 0;
-
-    case HAL_SPI_TYPE_SLAVE:
-        AM_REGn(IOSLAVE, spi_num, CFG) &= ~AM_REG_IOSLAVE_CFG_IFCEN(1);
-        return 0;
-
-    default:
-        return SYS_EINVAL;
-    }
-}
-
-static void
-apollo3_spi_fifo_read(struct apollo3_spi *spi, void *rx_data, int num_bytes)
-{
-    int num_words;
-    int i;
-
-    num_words = (num_bytes + 3) / 4;
-    for (i = 0; i < num_words; i++) {
-        apollo3_spi_fifo[i] = AM_REGn(IOMSTR, spi->spi_num, FIFO);
-    }
-
-    if (rx_data != NULL) {
-        memcpy(rx_data, apollo3_spi_fifo, num_bytes);
-    }
-}
-
-static void
-apollo3_spi_fifo_write(struct apollo3_spi *spi,
-                       const void *tx_data, int num_bytes)
-{
-    uint32_t word;
-    int num_words;
-    int i;
-
-    assert(num_bytes != 0);
-
-    memcpy(apollo3_spi_fifo, tx_data, num_bytes);
-
-    num_words = (num_bytes + 3) / 4;
-    for (i = 0; i < num_words; i++) {
-        if (tx_data == NULL) {
-            word = 0;
-        } else {
-            word = apollo3_spi_fifo[i];
-        }
-        AM_REGn(IOMSTR, spi->spi_num, FIFO) = word;
-    }
-}
-
-static int
-apollo3_spi_next_chunk_sz(int buf_sz, int off, int fifo_space)
-{
-    int bytes_left;
-
-    bytes_left = buf_sz - off;
-    if (bytes_left > fifo_space) {
-        return fifo_space;
-    } else {
-        return bytes_left;
-    }
-}
-
-static int
-apollo3_spi_tx_next_chunk(struct apollo3_spi *spi)
-{
-    int fifo_space;
-    int chunk_sz;
-
-    fifo_space = apollo3_spi_fifo_space(spi->spi_num);
-    chunk_sz = apollo3_spi_next_chunk_sz(spi->buf_num_bytes, spi->buf_off,
-                                         fifo_space);
-    if (chunk_sz <= 0) {
-        return 0;
-    }
-
-    apollo3_spi_clear_ints(spi->spi_num);
-
-    apollo3_spi_fifo_write(spi, spi->txbuf + spi->buf_off, chunk_sz);
-    spi->prev_num_bytes = chunk_sz;
-
-    return SYS_EAGAIN;
-}
-
-static uint32_t
-apollo3_spi_cmd_build(uint16_t num_bytes, uint8_t channel)
-{
-    return 0x40000000  /* Raw write. */     |
-           (num_bytes & 0xF00) << 15        |
-           (num_bytes & 0xFF)               |
-           channel << 16;
-}
-
-static void
-apollo3_spi_tx_first_chunk(struct apollo3_spi *spi)
-{
-    uint32_t cmd;
-
-    apollo3_spi_tx_next_chunk(spi);
-
-    cmd = apollo3_spi_cmd_build(spi->buf_num_bytes, 0);
-    apollo3_spi_disable_ints(spi);
-    AM_REGn(IOMSTR, spi->spi_num, CMD) = cmd;
-    apollo3_spi_reenable_ints(spi);
-}
-
-static void
-apollo3_spi_service_master(struct apollo3_spi *spi, uint32_t status)
-{
-    uint8_t prev_op;
-    int rc;
-
-    if (spi->op == APOLLO3_SPI_OP_NONE) {
-        /* Spurious interrupt or programming error. */
-        return;
-    }
-
-    /* Copy received data. */
-    apollo3_spi_fifo_read(spi, spi->rxbuf + spi->buf_off, spi->prev_num_bytes);
-    spi->buf_off += spi->prev_num_bytes;
-
-    assert(spi->buf_off <= spi->buf_num_bytes);
-
-    if (!(status & AM_HAL_IOM_INT_THR)) {
-        /* Error or command complete. */
-
-        prev_op = spi->op;
-        spi->op = APOLLO3_SPI_OP_NONE;
-
-        if (prev_op == APOLLO3_SPI_OP_NONBLOCKING) {
-            spi->txrx_cb_func(spi->txrx_cb_arg, spi->buf_off);
-        }
-
-        return;
-    }
-
-    /* Transmit next chunk. */
-    rc = apollo3_spi_tx_next_chunk(spi);
-    assert(rc == 0);
-}
-
-static int
-apollo3_spi_txrx_begin(struct apollo3_spi *spi, uint8_t op,
-                       const void *tx_data, void *rx_data, int num_bytes)
-{
-    if (spi->op != APOLLO3_SPI_OP_NONE) {
-        return SYS_EBUSY;
-    }
-
-    if (num_bytes <= 0 || num_bytes > APOLLO3_SPI_MAX_TXR_SZ) {
-        return SYS_EINVAL;
-    }
-
-    spi->op = op;
-    spi->txbuf = tx_data;
-    spi->rxbuf = rx_data;
-    spi->buf_num_bytes = num_bytes;
-    spi->buf_off = 0;
-
-    apollo3_spi_tx_first_chunk(spi);
-    return 0;
-}
-
-static int
-apollo3_spi_txrx_blocking(struct apollo3_spi *spi,
-                          const void *tx_data, void *rx_data, int num_bytes)
-{
-    int rc;
-
-    rc = apollo3_spi_txrx_begin(spi, APOLLO3_SPI_OP_BLOCKING,
-                                tx_data, rx_data, num_bytes);
-    if (rc != 0) {
-        return rc;
-    }
-
-    apollo3_spi_block_until_idle(spi);
+    am_hal_iom_disable(g_spi_handles[spi_num]);
 
     return 0;
 }
@@ -831,32 +388,26 @@ apollo3_spi_txrx_blocking(struct apollo3_spi *spi,
 uint16_t
 hal_spi_tx_val(int spi_num, uint16_t val)
 {
-    struct apollo3_spi *spi;
-    uint8_t tx_data;
-    uint8_t rx_data;
-    int rc;
+    am_hal_iom_transfer_t Transaction;
+    uint32_t tx_buf = 0;
+    uint32_t rx_buf = 0xffff;
+    uint16_t *tx_ptr = (uint16_t *)&tx_buf;
+    tx_ptr[0] = val;
 
-    spi = apollo3_spi_resolve(spi_num);
-    if (spi == NULL) {
-        return 0xffff;
-    }
+    Transaction.ui32InstrLen    = 0;
+    Transaction.ui32Instr       = 0;
+    Transaction.eDirection      = AM_HAL_IOM_FULLDUPLEX;
+    Transaction.ui32NumBytes    = 2;
+    Transaction.pui32TxBuffer   = &tx_buf;
+    Transaction.pui32RxBuffer   = &rx_buf;
+    Transaction.bContinue       = false;
+    Transaction.ui8RepeatCount  = 0;
+    Transaction.ui32PauseCondition = 0;
+    Transaction.ui32StatusSetClr = 0;
 
-    switch (spi->spi_type) {
-    case HAL_SPI_TYPE_MASTER:
-        tx_data = val;
-        rc = apollo3_spi_txrx_blocking(spi, &tx_data, &rx_data, 1);
-        if (rc == 0) {
-            return rx_data;
-        } else {
-            return 0xffff;
-        }
+    am_hal_iom_spi_blocking_fullduplex(g_spi_handles[spi_num], &Transaction);
 
-    case HAL_SPI_TYPE_SLAVE:
-        return 0xffff;
-
-    default:
-        return 0xffff;
-    }
+    return rx_buf;
 }
 
 /**
@@ -877,20 +428,6 @@ hal_spi_tx_val(int spi_num, uint16_t val)
 int
 hal_spi_set_txrx_cb(int spi_num, hal_spi_txrx_cb txrx_cb, void *arg)
 {
-    struct apollo3_spi *spi;
-
-    spi = apollo3_spi_resolve(spi_num);
-    if (spi == NULL) {
-        return SYS_EINVAL;
-    }
-
-    if (spi->enabled) {
-        return SYS_EBUSY;
-    }
-
-    spi->txrx_cb_func = txrx_cb;
-    spi->txrx_cb_arg = arg;
-
     return 0;
 }
 
@@ -920,16 +457,20 @@ hal_spi_set_txrx_cb(int spi_num, hal_spi_txrx_cb txrx_cb, void *arg)
 int
 hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int num_bytes)
 {
-    struct apollo3_spi *spi;
-    int rc;
+    am_hal_iom_transfer_t       Transaction;
 
-    spi = apollo3_spi_resolve(spi_num);
-    if (spi == NULL) {
-        return SYS_EINVAL;
-    }
+    Transaction.ui32InstrLen    = 0;
+    Transaction.ui32Instr       = 0;
+    Transaction.eDirection      = AM_HAL_IOM_FULLDUPLEX;
+    Transaction.ui32NumBytes    = num_bytes;
+    Transaction.pui32TxBuffer   = txbuf;
+    Transaction.pui32RxBuffer   = rxbuf;
+    Transaction.bContinue       = false;
+    Transaction.ui8RepeatCount  = 0;
+    Transaction.ui32PauseCondition = 0;
+    Transaction.ui32StatusSetClr = 0;
 
-    rc = apollo3_spi_txrx_blocking(spi, txbuf, rxbuf, num_bytes);
-    return rc;
+    return am_hal_iom_spi_blocking_fullduplex(g_spi_handles[spi_num], &Transaction);
 }
 
 /**
@@ -967,37 +508,7 @@ hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int num_bytes)
 int
 hal_spi_txrx_noblock(int spi_num, void *txbuf, void *rxbuf, int num_bytes)
 {
-    struct apollo3_spi *spi;
-    int rc;
-
-    spi = apollo3_spi_resolve(spi_num);
-    if (spi == NULL) {
-        return SYS_EINVAL;
-    }
-
-    if (spi->txrx_cb_func == NULL) {
-        return SYS_ENOENT;
-    }
-
-    if (spi->op != APOLLO3_SPI_OP_NONE) {
-        return SYS_EBUSY;
-    }
-
-    switch (spi->spi_type) {
-    case HAL_SPI_TYPE_MASTER:
-        rc = apollo3_spi_txrx_begin(spi, APOLLO3_SPI_OP_NONBLOCKING,
-                                    txbuf, rxbuf, num_bytes);
-        return rc;
-
-    case HAL_SPI_TYPE_SLAVE:
-        spi->txbuf = txbuf;
-        spi->rxbuf = rxbuf;
-        spi->op = APOLLO3_SPI_OP_NONBLOCKING;
-        return 0;
-
-    default:
-        return SYS_EINVAL;
-    }
+    return SYS_EINVAL;
 }
 
 /**
