@@ -185,65 +185,14 @@ int hal_i2c_config(uint8_t i2c_num, const struct hal_i2c_settings *cfg) {
 
     /* Frequency is in khz, map to AM_HAL_IOM frequencies */
     switch(cfg->frequency) {
-        case 10:
-            iom_cfg.ui32ClockFreq = AM_HAL_IOM_10KHZ;
-            break;
-        case 50:
-            iom_cfg.ui32ClockFreq = AM_HAL_IOM_50KHZ;
-            break;
         case 100:
             iom_cfg.ui32ClockFreq = AM_HAL_IOM_100KHZ;
-            break;
-        case 125:
-            iom_cfg.ui32ClockFreq = AM_HAL_IOM_125KHZ;
-            break;
-        case 250:
-            iom_cfg.ui32ClockFreq = AM_HAL_IOM_250KHZ;
-            break;
-        case 375:
-            iom_cfg.ui32ClockFreq = AM_HAL_IOM_375KHZ;
             break;
         case 400:
             iom_cfg.ui32ClockFreq = AM_HAL_IOM_400KHZ;
             break;
-        case 500:
-            iom_cfg.ui32ClockFreq = AM_HAL_IOM_500KHZ;
-            break;
-        case 750:
-            iom_cfg.ui32ClockFreq = AM_HAL_IOM_750KHZ;
-            break;
         case 1000:
             iom_cfg.ui32ClockFreq = AM_HAL_IOM_1MHZ;
-            break;
-        case 1500:
-            iom_cfg.ui32ClockFreq = AM_HAL_IOM_1_5MHZ;
-            break;
-        case 2000:
-            iom_cfg.ui32ClockFreq = AM_HAL_IOM_2MHZ;
-            break;
-        case 3000:
-            iom_cfg.ui32ClockFreq = AM_HAL_IOM_3MHZ;
-            break;
-        case 4000:
-            iom_cfg.ui32ClockFreq = AM_HAL_IOM_4MHZ;
-            break;
-        case 6000:
-            iom_cfg.ui32ClockFreq = AM_HAL_IOM_6MHZ;
-            break;
-        case 8000:
-            iom_cfg.ui32ClockFreq = AM_HAL_IOM_8MHZ;
-            break;
-        case 12000:
-            iom_cfg.ui32ClockFreq = AM_HAL_IOM_12MHZ;
-            break;
-        case 16000:
-            iom_cfg.ui32ClockFreq = AM_HAL_IOM_16MHZ;
-            break;
-        case 24000:
-            iom_cfg.ui32ClockFreq = AM_HAL_IOM_24MHZ;
-            break;
-        case 48000:
-            iom_cfg.ui32ClockFreq = AM_HAL_IOM_48MHZ;
             break;
         default:
             return -1;

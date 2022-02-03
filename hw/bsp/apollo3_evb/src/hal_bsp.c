@@ -71,6 +71,7 @@ static const struct apollo3_spi_cfg hal_bsp_spi0m_cfg = {
     .sck_pin      = MYNEWT_VAL(SPI_0_MASTER_PIN_SCK),
     .mosi_pin     = MYNEWT_VAL(SPI_0_MASTER_PIN_MOSI),
     .miso_pin     = MYNEWT_VAL(SPI_0_MASTER_PIN_MISO),
+    .ss_pin       = MYNEWT_VAL(SPI_0_PIN_CS),
 };
 #endif
 
@@ -79,6 +80,7 @@ static const struct apollo3_spi_cfg hal_bsp_spi1m_cfg = {
     .sck_pin      = MYNEWT_VAL(SPI_1_MASTER_PIN_SCK),
     .mosi_pin     = MYNEWT_VAL(SPI_1_MASTER_PIN_MOSI),
     .miso_pin     = MYNEWT_VAL(SPI_1_MASTER_PIN_MISO),
+    .ss_pin       = MYNEWT_VAL(SPI_1_PIN_CS),
 };
 #endif
 
@@ -87,6 +89,7 @@ static const struct apollo3_spi_cfg hal_bsp_spi2m_cfg = {
     .sck_pin      = MYNEWT_VAL(SPI_2_MASTER_PIN_SCK),
     .mosi_pin     = MYNEWT_VAL(SPI_2_MASTER_PIN_MOSI),
     .miso_pin     = MYNEWT_VAL(SPI_2_MASTER_PIN_MISO),
+    .ss_pin       = MYNEWT_VAL(SPI_2_PIN_CS),
 };
 #endif
 
@@ -95,6 +98,7 @@ static const struct apollo3_spi_cfg hal_bsp_spi3m_cfg = {
     .sck_pin      = MYNEWT_VAL(SPI_3_MASTER_PIN_SCK),
     .mosi_pin     = MYNEWT_VAL(SPI_3_MASTER_PIN_MOSI),
     .miso_pin     = MYNEWT_VAL(SPI_3_MASTER_PIN_MISO),
+    .ss_pin       = MYNEWT_VAL(SPI_3_PIN_CS),
 };
 #endif
 
@@ -103,6 +107,7 @@ static const struct apollo3_spi_cfg hal_bsp_spi4m_cfg = {
     .sck_pin      = MYNEWT_VAL(SPI_4_MASTER_PIN_SCK),
     .mosi_pin     = MYNEWT_VAL(SPI_4_MASTER_PIN_MOSI),
     .miso_pin     = MYNEWT_VAL(SPI_4_MASTER_PIN_MISO),
+    .ss_pin       = MYNEWT_VAL(SPI_4_PIN_CS),
 };
 #endif
 
@@ -111,6 +116,7 @@ static const struct apollo3_spi_cfg hal_bsp_spi5m_cfg = {
     .sck_pin      = MYNEWT_VAL(SPI_5_MASTER_PIN_SCK),
     .mosi_pin     = MYNEWT_VAL(SPI_5_MASTER_PIN_MOSI),
     .miso_pin     = MYNEWT_VAL(SPI_5_MASTER_PIN_MISO),
+    .ss_pin       = MYNEWT_VAL(SPI_5_PIN_CS),
 };
 #endif
 

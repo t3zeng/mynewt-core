@@ -226,7 +226,7 @@ static int
 hal_spi_init_master(int spi_num, const struct apollo3_spi_cfg *cfg)
 {
     int pin_cfg;
-    am_hal_gpio_pincfg_t spi_sck_cfg, spi_miso_cfg, spi_mosi_cfg;
+    am_hal_gpio_pincfg_t spi_sck_cfg, spi_miso_cfg, spi_mosi_cfg, spi_ss_cfg;
 
     /* Initialize the IOM. */
     am_hal_iom_initialize(spi_num, &g_spi_handles[spi_num]);
@@ -242,6 +242,15 @@ hal_spi_init_master(int spi_num, const struct apollo3_spi_cfg *cfg)
         return SYS_EINVAL;
     }
 
+    spi_ss_cfg.uFuncSel = pin_cfg;
+    spi_ss_cfg.eDriveStrength = AM_HAL_GPIO_PIN_DRIVESTRENGTH_12MA;
+    spi_ss_cfg.eGPOutcfg = AM_HAL_GPIO_PIN_OUTCFG_PUSHPULL;
+    spi_ss_cfg.eGPInput = AM_HAL_GPIO_PIN_INPUT_NONE;
+    spi_ss_cfg.eIntDir = AM_HAL_GPIO_PIN_INTDIR_LO2HI;
+    spi_ss_cfg.uIOMnum = 0;
+    spi_ss_cfg.uNCE = 0;
+    spi_ss_cfg.eCEpol = AM_HAL_GPIO_PIN_CEPOL_ACTIVELOW;
+    am_hal_gpio_pinconfig(cfg->ss_pin, spi_ss_cfg);
 
     spi_sck_cfg.uFuncSel = pin_cfg;
     spi_sck_cfg.eDriveStrength = AM_HAL_GPIO_PIN_DRIVESTRENGTH_12MA;
