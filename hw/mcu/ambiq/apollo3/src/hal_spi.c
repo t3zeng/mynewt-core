@@ -32,42 +32,6 @@
 #undef IOSLAVE
 #undef CLKGEN
 
-/* Pointer array that points to am_hal_iom */
-void *g_spi_handles[AM_REG_IOM_NUM_MODULES];
-
-#define AM_IOS_TX_BUFSIZE_MAX   1023
-uint8_t g_pui8TxFifoBuffer[AM_IOS_TX_BUFSIZE_MAX];
-
-static am_hal_iom_config_t g_sIOMSpiConfig =
-{
-    .eInterfaceMode = AM_HAL_IOM_SPI_MODE,
-    .ui32ClockFreq = AM_HAL_IOM_4MHZ,
-    .eSpiMode = AM_HAL_IOM_SPI_MODE_0, /* CPOL = 0; CPHA = 0 */
-};
-
-// static am_hal_ios_config_t g_sIOSSpiConfig =
-// {
-//     // Configure the IOS in SPI mode.
-//     .ui32InterfaceSelect = AM_HAL_IOS_USE_SPI,
-
-//     // Eliminate the "read-only" section, so an external host can use the
-//     // entire "direct write" section.
-//     .ui32ROBase = 0x78,
-
-//     // Making the "FIFO" section as big as possible.
-//     .ui32FIFOBase = 0x80,
-
-//     // We don't need any RAM space, so extend the FIFO all the way to the end
-//     // of the LRAM.
-//     .ui32RAMBase = 0x100,
-
-//     // FIFO Threshold - set to half the size
-//     .ui32FIFOThreshold = 0x20,
-
-//     .pui8SRAMBuffer = g_pui8TxFifoBuffer,
-//     .ui32SRAMBufferCap = AM_IOS_TX_BUFSIZE_MAX,
-// };
-
 #define SPI_0_ENABLED (MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_0_SLAVE))
 #define SPI_1_ENABLED (MYNEWT_VAL(SPI_1_MASTER) || MYNEWT_VAL(SPI_1_SLAVE))
 #define SPI_2_ENABLED (MYNEWT_VAL(SPI_2_MASTER) || MYNEWT_VAL(SPI_2_SLAVE))
@@ -100,6 +64,44 @@ static am_hal_iom_config_t g_sIOMSpiConfig =
     MYNEWT_VAL(SPI_3_SLAVE) ||  \
     MYNEWT_VAL(SPI_4_SLAVE) ||  \
     MYNEWT_VAL(SPI_5_SLAVE))
+
+/* Pointer array that points to am_hal_iom */
+void *g_spi_handles[AM_REG_IOM_NUM_MODULES];
+
+// #define AM_IOS_TX_BUFSIZE_MAX   1023
+// uint8_t g_pui8TxFifoBuffer[AM_IOS_TX_BUFSIZE_MAX];
+
+#if SPI_N_MASTER
+static am_hal_iom_config_t g_sIOMSpiConfig =
+{
+    .eInterfaceMode = AM_HAL_IOM_SPI_MODE,
+    .ui32ClockFreq = AM_HAL_IOM_4MHZ,
+    .eSpiMode = AM_HAL_IOM_SPI_MODE_0, /* CPOL = 0; CPHA = 0 */
+};
+#endif
+
+// static am_hal_ios_config_t g_sIOSSpiConfig =
+// {
+//     // Configure the IOS in SPI mode.
+//     .ui32InterfaceSelect = AM_HAL_IOS_USE_SPI,
+
+//     // Eliminate the "read-only" section, so an external host can use the
+//     // entire "direct write" section.
+//     .ui32ROBase = 0x78,
+
+//     // Making the "FIFO" section as big as possible.
+//     .ui32FIFOBase = 0x80,
+
+//     // We don't need any RAM space, so extend the FIFO all the way to the end
+//     // of the LRAM.
+//     .ui32RAMBase = 0x100,
+
+//     // FIFO Threshold - set to half the size
+//     .ui32FIFOThreshold = 0x20,
+
+//     .pui8SRAMBuffer = g_pui8TxFifoBuffer,
+//     .ui32SRAMBufferCap = AM_IOS_TX_BUFSIZE_MAX,
+// };
 
 static uint32_t
 apollo3_spi_data_mode(int spi_mode)
@@ -222,6 +224,23 @@ hal_spi_pin_config(int spi_num, int master, const struct apollo3_spi_cfg *pins)
     }
 }
 
+static uint32_t get_uNCE(int spi_num) {
+    switch(spi_num) {
+        case 0: 
+        case 3:
+        case 5:
+            return 0;
+        case 1:
+            return 2;
+        case 2:
+            return 3;
+        case 4:
+            return 1;
+        default:
+            return -1;
+    }
+}
+
 static int
 hal_spi_init_master(int spi_num, const struct apollo3_spi_cfg *cfg)
 {
@@ -242,13 +261,13 @@ hal_spi_init_master(int spi_num, const struct apollo3_spi_cfg *cfg)
         return SYS_EINVAL;
     }
 
-    spi_ss_cfg.uFuncSel = pin_cfg;
+    spi_ss_cfg.uFuncSel = 1; /* SS pin is always func 1 */
     spi_ss_cfg.eDriveStrength = AM_HAL_GPIO_PIN_DRIVESTRENGTH_12MA;
     spi_ss_cfg.eGPOutcfg = AM_HAL_GPIO_PIN_OUTCFG_PUSHPULL;
     spi_ss_cfg.eGPInput = AM_HAL_GPIO_PIN_INPUT_NONE;
     spi_ss_cfg.eIntDir = AM_HAL_GPIO_PIN_INTDIR_LO2HI;
-    spi_ss_cfg.uIOMnum = 0;
-    spi_ss_cfg.uNCE = 0;
+    spi_ss_cfg.uIOMnum = spi_num;
+    spi_ss_cfg.uNCE = get_uNCE(spi_num);
     spi_ss_cfg.eCEpol = AM_HAL_GPIO_PIN_CEPOL_ACTIVELOW;
     am_hal_gpio_pinconfig(cfg->ss_pin, spi_ss_cfg);
 
@@ -267,7 +286,7 @@ hal_spi_init_master(int spi_num, const struct apollo3_spi_cfg *cfg)
     am_hal_gpio_pinconfig(cfg->mosi_pin, spi_mosi_cfg);
 
     /* Enable the IOM. */
-    am_hal_iom_enable(g_spi_handles[spi_num]);
+    hal_spi_enable(spi_num);
 
     return 0;
 }
@@ -405,7 +424,7 @@ hal_spi_tx_val(int spi_num, uint16_t val)
 
     Transaction.ui32InstrLen    = 0;
     Transaction.ui32Instr       = 0;
-    Transaction.eDirection      = AM_HAL_IOM_FULLDUPLEX;
+    Transaction.eDirection      = AM_HAL_IOM_TX;
     Transaction.ui32NumBytes    = 2;
     Transaction.pui32TxBuffer   = &tx_buf;
     Transaction.pui32RxBuffer   = &rx_buf;
@@ -413,7 +432,9 @@ hal_spi_tx_val(int spi_num, uint16_t val)
     Transaction.ui8RepeatCount  = 0;
     Transaction.ui32PauseCondition = 0;
     Transaction.ui32StatusSetClr = 0;
-
+    
+    Transaction.uPeerInfo.ui32SpiChipSelect = get_uNCE(spi_num);
+    
     am_hal_iom_spi_blocking_fullduplex(g_spi_handles[spi_num], &Transaction);
 
     return rx_buf;
