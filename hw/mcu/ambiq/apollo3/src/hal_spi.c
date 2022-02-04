@@ -65,43 +65,98 @@
     MYNEWT_VAL(SPI_4_SLAVE) ||  \
     MYNEWT_VAL(SPI_5_SLAVE))
 
-/* Pointer array that points to am_hal_iom */
-void *g_spi_handles[AM_REG_IOM_NUM_MODULES];
+struct apollo3_spi {
+    uint8_t spi_num;
+    uint8_t spi_type;
+    void *spi_handle;
 
-// #define AM_IOS_TX_BUFSIZE_MAX   1023
-// uint8_t g_pui8TxFifoBuffer[AM_IOS_TX_BUFSIZE_MAX];
+    hal_spi_txrx_cb txrx_cb_func;
+    void *txrx_cb_arg;
+};
 
-#if SPI_N_MASTER
+#if SPI_0_ENABLED
+static struct apollo3_spi apollo3_spi0;
+#endif
+#if SPI_1_ENABLED
+static struct apollo3_spi apollo3_spi1;
+#endif
+#if SPI_2_ENABLED
+static struct apollo3_spi apollo3_spi2;
+#endif
+#if SPI_3_ENABLED
+static struct apollo3_spi apollo3_spi3;
+#endif
+#if SPI_4_ENABLED
+static struct apollo3_spi apollo3_spi4;
+#endif
+#if SPI_5_ENABLED
+static struct apollo3_spi apollo3_spi5;
+#endif
+
 static am_hal_iom_config_t g_sIOMSpiConfig =
 {
     .eInterfaceMode = AM_HAL_IOM_SPI_MODE,
     .ui32ClockFreq = AM_HAL_IOM_4MHZ,
     .eSpiMode = AM_HAL_IOM_SPI_MODE_0, /* CPOL = 0; CPHA = 0 */
 };
+
+#define AM_IOS_TX_BUFSIZE_MAX   1023
+uint8_t g_pui8TxFifoBuffer[AM_IOS_TX_BUFSIZE_MAX];
+static am_hal_ios_config_t g_sIOSSpiConfig =
+{
+    // Configure the IOS in SPI mode.
+    .ui32InterfaceSelect = AM_HAL_IOS_USE_SPI,
+
+    // Eliminate the "read-only" section, so an external host can use the
+    // entire "direct write" section.
+    .ui32ROBase = 0x78,
+
+    // Making the "FIFO" section as big as possible.
+    .ui32FIFOBase = 0x80,
+
+    // We don't need any RAM space, so extend the FIFO all the way to the end
+    // of the LRAM.
+    .ui32RAMBase = 0x100,
+
+    // FIFO Threshold - set to half the size
+    .ui32FIFOThreshold = 0x20,
+
+    .pui8SRAMBuffer = g_pui8TxFifoBuffer,
+    .ui32SRAMBufferCap = AM_IOS_TX_BUFSIZE_MAX,
+};
+
+static struct apollo3_spi *
+apollo3_spi_resolve(int spi_num)
+{
+    switch (spi_num) {
+#if SPI_0_ENABLED
+    case 0:
+        return &apollo3_spi0;
 #endif
-
-// static am_hal_ios_config_t g_sIOSSpiConfig =
-// {
-//     // Configure the IOS in SPI mode.
-//     .ui32InterfaceSelect = AM_HAL_IOS_USE_SPI,
-
-//     // Eliminate the "read-only" section, so an external host can use the
-//     // entire "direct write" section.
-//     .ui32ROBase = 0x78,
-
-//     // Making the "FIFO" section as big as possible.
-//     .ui32FIFOBase = 0x80,
-
-//     // We don't need any RAM space, so extend the FIFO all the way to the end
-//     // of the LRAM.
-//     .ui32RAMBase = 0x100,
-
-//     // FIFO Threshold - set to half the size
-//     .ui32FIFOThreshold = 0x20,
-
-//     .pui8SRAMBuffer = g_pui8TxFifoBuffer,
-//     .ui32SRAMBufferCap = AM_IOS_TX_BUFSIZE_MAX,
-// };
+#if SPI_1_ENABLED
+    case 1:
+        return &apollo3_spi1;
+#endif
+#if SPI_2_ENABLED
+    case 2:
+        return &apollo3_spi2;
+#endif
+#if SPI_3_ENABLED
+    case 3:
+        return &apollo3_spi3;
+#endif
+#if SPI_4_ENABLED
+    case 4:
+        return &apollo3_spi4;
+#endif
+#if SPI_5_ENABLED
+    case 5:
+        return &apollo3_spi5;
+#endif
+    default:
+        return NULL;
+    }
+}
 
 static uint32_t
 apollo3_spi_data_mode(int spi_mode)
@@ -119,30 +174,35 @@ static int
 hal_spi_config_master(int spi_num, const struct hal_spi_settings *settings)
 {
     am_hal_iom_config_t sdk_config;
+    struct apollo3_spi *spi;
 
-    if (spi_num < 0 || spi_num >= AM_REG_IOM_NUM_MODULES) {
+    spi = apollo3_spi_resolve(spi_num);
+    if (spi == NULL) {
         return SYS_EINVAL;
     }
 
     sdk_config.eInterfaceMode = AM_HAL_IOM_SPI_MODE;
     sdk_config.ui32ClockFreq = settings->baudrate;
     sdk_config.eSpiMode = (am_hal_iom_spi_mode_e)apollo3_spi_data_mode(settings->data_mode);
-    am_hal_iom_configure(g_spi_handles[spi_num], &sdk_config);
+    am_hal_iom_configure(spi->spi_handle, &sdk_config);
 
     return 0;
 }
 
-// static int
-// hal_spi_config_slave(int spi_num, const struct hal_spi_settings *settings)
-// {
-//     if (spi_num < 0 || spi_num >= AM_REG_IOM_NUM_MODULES) {
-//         return SYS_EINVAL;
-//     }
+static int
+hal_spi_config_slave(int spi_num, const struct hal_spi_settings *settings)
+{
+    struct apollo3_spi *spi;
 
-//     am_hal_ios_configure(g_spi_handles[spi_num], &g_sIOSSpiConfig);
+    spi = apollo3_spi_resolve(spi_num);
+    if (spi == NULL) {
+        return SYS_EINVAL;
+    }
 
-//     return 0;
-// }
+    am_hal_ios_configure(spi->spi_handle, &g_sIOSSpiConfig);
+
+    return 0;
+}
 
 /*  | spi:cfg   | sck   | miso  | mosi  |
  *  |-----------+-------+-------+-------|
@@ -244,16 +304,29 @@ static uint32_t get_uNCE(int spi_num) {
 static int
 hal_spi_init_master(int spi_num, const struct apollo3_spi_cfg *cfg)
 {
+    struct apollo3_spi *spi;
     int pin_cfg;
     am_hal_gpio_pincfg_t spi_sck_cfg, spi_miso_cfg, spi_mosi_cfg, spi_ss_cfg;
 
+    spi = apollo3_spi_resolve(spi_num);
+    if (spi == NULL) {
+        return SYS_EINVAL;
+    }
+    memset(spi, 0, sizeof *spi);
+
     /* Initialize the IOM. */
-    am_hal_iom_initialize(spi_num, &g_spi_handles[spi_num]);
+    if (am_hal_iom_initialize(spi_num, &(spi->spi_handle)) != AM_HAL_STATUS_SUCCESS) {
+        return SYS_EINVAL;
+    }
     
-    am_hal_iom_power_ctrl(g_spi_handles[spi_num], AM_HAL_SYSCTRL_WAKE, false);
+    if (am_hal_iom_power_ctrl(spi->spi_handle, AM_HAL_SYSCTRL_WAKE, false) != AM_HAL_STATUS_SUCCESS) {
+        return SYS_EINVAL;
+    }
 
     /* Set the required configuration settings for the IOM. */
-    am_hal_iom_configure(g_spi_handles[spi_num], &g_sIOMSpiConfig);
+    if (am_hal_iom_configure(spi->spi_handle, &g_sIOMSpiConfig) != AM_HAL_STATUS_SUCCESS) {
+        return SYS_EINVAL;
+    }
 
     /* Configure the IOM pins. */
     pin_cfg = hal_spi_pin_config(spi_num, 1, cfg);
@@ -269,24 +342,35 @@ hal_spi_init_master(int spi_num, const struct apollo3_spi_cfg *cfg)
     spi_ss_cfg.uIOMnum = spi_num;
     spi_ss_cfg.uNCE = get_uNCE(spi_num);
     spi_ss_cfg.eCEpol = AM_HAL_GPIO_PIN_CEPOL_ACTIVELOW;
-    am_hal_gpio_pinconfig(cfg->ss_pin, spi_ss_cfg);
+    if (am_hal_gpio_pinconfig(cfg->ss_pin, spi_ss_cfg) != AM_HAL_STATUS_SUCCESS) {
+        return SYS_EINVAL;
+    }
 
     spi_sck_cfg.uFuncSel = pin_cfg;
     spi_sck_cfg.eDriveStrength = AM_HAL_GPIO_PIN_DRIVESTRENGTH_12MA;
     spi_sck_cfg.uIOMnum = spi_num;
-    am_hal_gpio_pinconfig(cfg->sck_pin, spi_sck_cfg);
+    if (am_hal_gpio_pinconfig(cfg->sck_pin, spi_sck_cfg) != AM_HAL_STATUS_SUCCESS){
+        return SYS_EINVAL;
+    }
 
     spi_miso_cfg.uFuncSel = pin_cfg;
     spi_miso_cfg.uIOMnum = spi_num;
-    am_hal_gpio_pinconfig(cfg->miso_pin, spi_miso_cfg);
+    if (am_hal_gpio_pinconfig(cfg->miso_pin, spi_miso_cfg) != AM_HAL_STATUS_SUCCESS) {
+        return SYS_EINVAL;
+    }
 
     spi_mosi_cfg.uFuncSel = pin_cfg;
     spi_mosi_cfg.eDriveStrength = AM_HAL_GPIO_PIN_DRIVESTRENGTH_12MA;
     spi_mosi_cfg.uIOMnum = spi_num;
-    am_hal_gpio_pinconfig(cfg->mosi_pin, spi_mosi_cfg);
+    if (am_hal_gpio_pinconfig(cfg->mosi_pin, spi_mosi_cfg) != AM_HAL_STATUS_SUCCESS) {
+        return SYS_EINVAL;
+    }
 
     /* Enable the IOM. */
     hal_spi_enable(spi_num);
+
+    spi->spi_num = spi_num;
+    spi->spi_type = HAL_SPI_TYPE_MASTER;
 
     return 0;
 }
@@ -354,15 +438,19 @@ hal_spi_init(int spi_num, void *cfg, uint8_t spi_type)
 int
 hal_spi_config(int spi_num, struct hal_spi_settings *settings)
 {
+    const struct apollo3_spi *spi;
     int rc;
 
-    rc = hal_spi_config_master(spi_num, settings);
+    spi = apollo3_spi_resolve(spi_num);
+    if (spi == NULL) {
+        return SYS_EINVAL;
+    }
 
-    // if (spi->spi_type == HAL_SPI_TYPE_MASTER) {
-    //     rc = hal_spi_config_master(spi_num, settings);
-    // } else {
-    //     rc = hal_spi_config_slave(spi_num, settings);
-    // }
+    if (spi->spi_type == HAL_SPI_TYPE_MASTER) {
+        rc = hal_spi_config_master(spi_num, settings);
+    } else {
+        rc = hal_spi_config_slave(spi_num, settings);
+    }
 
     return rc;
 }
@@ -379,7 +467,13 @@ hal_spi_config(int spi_num, struct hal_spi_settings *settings)
 int
 hal_spi_enable(int spi_num)
 {
-    am_hal_iom_enable(g_spi_handles[spi_num]);
+    struct apollo3_spi *spi;
+
+    spi = apollo3_spi_resolve(spi_num);
+    if (spi == NULL) {
+        return SYS_EINVAL;
+    }
+    am_hal_iom_enable(spi->spi_handle);
 
     return 0;
 }
@@ -395,7 +489,13 @@ hal_spi_enable(int spi_num)
 int
 hal_spi_disable(int spi_num)
 {
-    am_hal_iom_disable(g_spi_handles[spi_num]);
+    struct apollo3_spi *spi;
+
+    spi = apollo3_spi_resolve(spi_num);
+    if (spi == NULL) {
+        return SYS_EINVAL;
+    }
+    am_hal_iom_disable(spi->spi_handle);
 
     return 0;
 }
@@ -416,26 +516,38 @@ hal_spi_disable(int spi_num)
 uint16_t
 hal_spi_tx_val(int spi_num, uint16_t val)
 {
+    struct apollo3_spi *spi;
     am_hal_iom_transfer_t Transaction;
     uint32_t tx_buf = 0;
     uint32_t rx_buf = 0xffff;
-    uint16_t *tx_ptr = (uint16_t *)&tx_buf;
+    uint8_t *tx_ptr = (uint8_t *)&tx_buf;
+
+    spi = apollo3_spi_resolve(spi_num);
+    if (spi == NULL) {
+        return SYS_EINVAL;
+    }
+
     tx_ptr[0] = val;
+    tx_ptr[1] = val;
+    tx_ptr[2] = val;
+    tx_ptr[3] = val;
 
     Transaction.ui32InstrLen    = 0;
     Transaction.ui32Instr       = 0;
-    Transaction.eDirection      = AM_HAL_IOM_TX;
-    Transaction.ui32NumBytes    = 2;
+    Transaction.eDirection      = AM_HAL_IOM_FULLDUPLEX;
+    Transaction.ui32NumBytes    = 1;
     Transaction.pui32TxBuffer   = &tx_buf;
     Transaction.pui32RxBuffer   = &rx_buf;
     Transaction.bContinue       = false;
     Transaction.ui8RepeatCount  = 0;
     Transaction.ui32PauseCondition = 0;
     Transaction.ui32StatusSetClr = 0;
-    
+
     Transaction.uPeerInfo.ui32SpiChipSelect = get_uNCE(spi_num);
     
-    am_hal_iom_spi_blocking_fullduplex(g_spi_handles[spi_num], &Transaction);
+    if (am_hal_iom_spi_blocking_fullduplex(spi->spi_handle, &Transaction) != AM_HAL_STATUS_SUCCESS) {
+        return 0xffff;
+    }
 
     return rx_buf;
 }
@@ -488,6 +600,12 @@ int
 hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int num_bytes)
 {
     am_hal_iom_transfer_t       Transaction;
+    struct apollo3_spi *spi;
+
+    spi = apollo3_spi_resolve(spi_num);
+    if (spi == NULL) {
+        return SYS_EINVAL;
+    }
 
     Transaction.ui32InstrLen    = 0;
     Transaction.ui32Instr       = 0;
@@ -500,7 +618,7 @@ hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int num_bytes)
     Transaction.ui32PauseCondition = 0;
     Transaction.ui32StatusSetClr = 0;
 
-    return am_hal_iom_spi_blocking_fullduplex(g_spi_handles[spi_num], &Transaction);
+    return am_hal_iom_spi_blocking_fullduplex(spi->spi_handle, &Transaction);
 }
 
 /**
