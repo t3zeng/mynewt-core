@@ -518,24 +518,18 @@ hal_spi_tx_val(int spi_num, uint16_t val)
 {
     struct apollo3_spi *spi;
     am_hal_iom_transfer_t Transaction;
-    uint32_t tx_buf = 0;
+    uint32_t tx_buf = val;
     uint32_t rx_buf = 0xffff;
-    uint8_t *tx_ptr = (uint8_t *)&tx_buf;
 
     spi = apollo3_spi_resolve(spi_num);
     if (spi == NULL) {
         return SYS_EINVAL;
     }
 
-    tx_ptr[0] = val;
-    tx_ptr[1] = val;
-    tx_ptr[2] = val;
-    tx_ptr[3] = val;
-
     Transaction.ui32InstrLen    = 0;
     Transaction.ui32Instr       = 0;
     Transaction.eDirection      = AM_HAL_IOM_FULLDUPLEX;
-    Transaction.ui32NumBytes    = 1;
+    Transaction.ui32NumBytes    = sizeof(val);
     Transaction.pui32TxBuffer   = &tx_buf;
     Transaction.pui32RxBuffer   = &rx_buf;
     Transaction.bContinue       = false;
@@ -570,7 +564,8 @@ hal_spi_tx_val(int spi_num, uint16_t val)
 int
 hal_spi_set_txrx_cb(int spi_num, hal_spi_txrx_cb txrx_cb, void *arg)
 {
-    return 0;
+    /* Not implemented */
+    return SYS_ERANGE;
 }
 
 /**
@@ -618,6 +613,8 @@ hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int num_bytes)
     Transaction.ui32PauseCondition = 0;
     Transaction.ui32StatusSetClr = 0;
 
+    Transaction.uPeerInfo.ui32SpiChipSelect = get_uNCE(spi_num);
+
     return am_hal_iom_spi_blocking_fullduplex(spi->spi_handle, &Transaction);
 }
 
@@ -656,7 +653,8 @@ hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int num_bytes)
 int
 hal_spi_txrx_noblock(int spi_num, void *txbuf, void *rxbuf, int num_bytes)
 {
-    return SYS_EINVAL;
+    /* Not implemented */
+    return SYS_ERANGE;
 }
 
 /**
