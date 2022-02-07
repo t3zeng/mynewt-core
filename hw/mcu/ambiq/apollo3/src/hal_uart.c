@@ -30,11 +30,30 @@
 /* Prevent CMSIS from breaking apollo3 macros. */
 #undef UART
 
+uint8_t g_pui8TxBuffer[256];
+uint8_t g_pui8RxBuffer[2];
+const am_hal_uart_config_t g_sUartConfig =
+{
+    /* Standard UART settings: 115200-8-N-1 */
+    .ui32BaudRate = 115200,
+    .ui32DataBits = AM_HAL_UART_DATA_BITS_8,
+    .ui32Parity = AM_HAL_UART_PARITY_NONE,
+    .ui32StopBits = AM_HAL_UART_ONE_STOP_BIT,
+    .ui32FlowControl = AM_HAL_UART_FLOW_CTRL_NONE,
+
+    /* Set TX and RX FIFOs to interrupt at half-full. */
+    .ui32FifoLevels = (AM_HAL_UART_TX_FIFO_1_2 |
+                       AM_HAL_UART_RX_FIFO_1_2),
+
+    /* Buffers */
+    .pui8TxBuffer = g_pui8TxBuffer,
+    .ui32TxBufferSize = sizeof(g_pui8TxBuffer),
+    .pui8RxBuffer = g_pui8RxBuffer,
+    .ui32RxBufferSize = sizeof(g_pui8RxBuffer),
+};
+
 /* IRQ handler type */
 typedef void apollo3_uart_irqh_t(void);
-
-/* UART handle for apollo3  */
-static void *g_sCOMUART;
 
 /*
  * 2 UART on Ambiq Apollo 3
@@ -49,33 +68,34 @@ struct apollo3_uart {
     hal_uart_tx_char u_tx_func;
     hal_uart_tx_done u_tx_done;
     void *u_func_arg;
+    void *uart_handle;
 };
 static struct apollo3_uart uarts[UART_CNT];
 
 static inline void
 apollo3_uart_enable_tx_irq(void)
 {
-    UARTn(0)->IER |= (UART0_IER_TXIM_Msk);
+    UARTn(0)->IER |= (AM_HAL_UART_INT_TX);
 }
 
 static inline void
 apollo3_uart_disable_tx_irq(void)
 {
-    UARTn(0)->IER &= ~(UART0_IER_TXIM_Msk);
+    UARTn(0)->IER &= ~(AM_HAL_UART_INT_TX);
 }
 
 static inline void
 apollo3_uart_enable_rx_irq(void)
 {
-    UARTn(0)->IER |= (UART0_IER_RTIM_Msk |
-            UART0_IER_RXIM_Msk);
+    UARTn(0)->IER |= (AM_HAL_UART_INT_RX |
+            AM_HAL_UART_INT_RX_TMOUT);
 }
 
 static inline void
 apollo3_uart_disable_rx_irq(void)
 {
-    UARTn(0)->IER &= ~(UART0_IER_RTIM_Msk |
-            UART0_IER_RXIM_Msk);
+    UARTn(0)->IER &= ~(AM_HAL_UART_INT_RX |
+            AM_HAL_UART_INT_RX_TMOUT);
 }
 
 int
@@ -296,28 +316,21 @@ hal_uart_init(int port, void *arg)
         return SYS_EINVAL;
     }
 
+    am_hal_uart_initialize(port, &(uarts[port].uart_handle));
+
+    am_hal_uart_power_control(uarts[port].uart_handle, AM_HAL_SYSCTRL_WAKE, false);
+
+    am_hal_uart_clock_speed_e eUartClockSpeed = eUART_CLK_SPEED_DEFAULT;
+    am_hal_uart_control(uarts[port].uart_handle, AM_HAL_UART_CONTROL_CLKSEL, &eUartClockSpeed);
+    am_hal_uart_configure(uarts[port].uart_handle, &g_sUartConfig);
+
     switch (cfg->suc_pin_tx) {
-    case 1:
-        pincfg.uFuncSel = 2;
-        break;
-
-    case 7:
-        pincfg.uFuncSel = 5;
-        break;
-
-    case 16:
-        pincfg.uFuncSel = 6;
-
-    case 20:
-    case 30:
-        pincfg.uFuncSel = 4;
-        break;
-
     case 22:
-    case 39:
         pincfg.uFuncSel = 0;
         break;
-
+    case 35:
+        pincfg.uFuncSel = 2;
+        break;
     default:
         return SYS_EINVAL;
     }
@@ -325,25 +338,12 @@ hal_uart_init(int port, void *arg)
     am_hal_gpio_pinconfig(cfg->suc_pin_tx, pincfg);
 
     switch (cfg->suc_pin_rx) {
-    case 2:
-        pincfg.uFuncSel = 2;
-        break;
-
-    case 11:
-    case 17:
-        pincfg.uFuncSel = 6;
-        break;
-
-    case 21:
-    case 31:
-        pincfg.uFuncSel = 4;
-        break;
-
     case 23:
-    case 40:
         pincfg.uFuncSel = 0;
         break;
-
+    case 36:
+        pincfg.uFuncSel = 2;
+        break;
     default:
         return SYS_EINVAL;
     }
@@ -352,61 +352,35 @@ hal_uart_init(int port, void *arg)
     /* RTS pin is optional. */
     if (cfg->suc_pin_rts != 0) {
         switch (cfg->suc_pin_rts) {
-        case 3:
+        case 44:
             pincfg.uFuncSel = 0;
             break;
-
-        case 5:
         case 37:
             pincfg.uFuncSel = 2;
             break;
-
-        case 13:
-        case 35:
-            pincfg.uFuncSel = 6;
-            break;
-
-        case 41:
-            pincfg.uFuncSel = 7;
-            break;
-
         default:
             return SYS_EINVAL;
         }
+        pincfg.eDriveStrength = AM_HAL_GPIO_PIN_DRIVESTRENGTH_2MA;
         am_hal_gpio_pinconfig(cfg->suc_pin_rts, pincfg);
     }
 
     /* CTS pin is optional. */
     if (cfg->suc_pin_cts != 0) {
         switch (cfg->suc_pin_cts) {
-        case 4:
+        case 45:
             pincfg.uFuncSel = 0;
             break;
-
-        case 6:
         case 38:
             pincfg.uFuncSel = 2;
             break;
-
-        case 12:
-        case 36:
-            pincfg.uFuncSel = 6;
-            break;
-
-        case 29:
-            pincfg.uFuncSel = 4;
-            break;
-
         default:
             return SYS_EINVAL;
         }
-        pincfg.eDriveStrength = AM_HAL_GPIO_PIN_DRIVESTRENGTH_2MA;
         am_hal_gpio_pinconfig(cfg->suc_pin_cts, pincfg);
     }
 
     apollo3_uart_set_nvic(port);
-
-    am_hal_uart_initialize(0, &g_sCOMUART);
 
     return 0;
 }
@@ -496,7 +470,7 @@ hal_uart_config(int port, int32_t baudrate, uint8_t databits, uint8_t stopbits,
 
     uart_cfg.ui32BaudRate = baudrate;
 
-    am_hal_uart_configure(g_sCOMUART, &uart_cfg);
+    am_hal_uart_configure(uarts[port].uart_handle, &uart_cfg);
 
     NVIC_EnableIRQ(irqn);
 

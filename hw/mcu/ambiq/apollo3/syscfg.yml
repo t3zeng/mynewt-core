@@ -28,10 +28,10 @@ syscfg.defs:
 
     UART_0:
         description: 'Whether to enable UART0'
-        value: 1
+        value: 0
     UART_1:
         description: 'Whether to enable UART1'
-        value: 1
+        value: 0
         
     SPI_0_MASTER:
         description: 'SPI 0 master'
