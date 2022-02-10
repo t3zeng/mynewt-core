@@ -22,13 +22,25 @@
 
 #include <hal/hal_bsp.h>
 #include <bsp/bsp.h>
-#include <hal/hal_spi.h>
-#include <hal/hal_i2c.h>
 #include <mcu/hal_apollo3.h>
+#include "am_mcu_apollo.h"
+
+#if MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_1_MASTER) || MYNEWT_VAL(SPI_2_MASTER) || MYNEWT_VAL(SPI_3_MASTER) || MYNEWT_VAL(SPI_4_MASTER) || MYNEWT_VAL(SPI_5_MASTER)
+#include <hal/hal_spi.h>
+#endif
+
+#if MYNEWT_VAL(I2C_0) || MYNEWT_VAL(I2C_1) || MYNEWT_VAL(I2C_2) || MYNEWT_VAL(I2C_3) || MYNEWT_VAL(I2C_4) || MYNEWT_VAL(I2C_5)
+#include <hal/hal_i2c.h>
+#endif
 
 #if MYNEWT_VAL(UART_0) || MYNEWT_VAL(UART_1)
 #include "uart/uart.h"
 #include "uart_hal/uart_hal.h"
+#endif
+
+#if MYNEWT_VAL(ADC_0)
+#include <adc/adc.h>
+#include <adc_apollo3/adc_apollo3.h>
 #endif
 
 #if MYNEWT_VAL(UART_0)
@@ -162,6 +174,38 @@ static const struct apollo3_i2c_cfg hal_bsp_i2c5m_cfg = {
 };
 #endif
 
+#if MYNEWT_VAL(ADC_0)
+#define ADC_SAMPLE_BUF_SIZE 128
+uint32_t g_ui32ADCSampleBuffer[ADC_SAMPLE_BUF_SIZE];
+
+static struct adc_dev os_bsp_adc0;
+static struct adc_cfg os_bsp_adc0_config = {
+    .ADCConfig = {
+        .eClock             = AM_HAL_ADC_CLKSEL_HFRC,
+        .ePolarity          = AM_HAL_ADC_TRIGPOL_RISING,
+        .eTrigger           = AM_HAL_ADC_TRIGSEL_SOFTWARE,
+        .eReference         = AM_HAL_ADC_REFSEL_INT_1P5,
+        .eClockMode         = AM_HAL_ADC_CLKMODE_LOW_LATENCY,
+        .ePowerMode         = AM_HAL_ADC_LPMODE0,
+        .eRepeat            = AM_HAL_ADC_REPEATING_SCAN,
+    },
+    .ADCSlotConfig = {
+        .eMeasToAvg      = AM_HAL_ADC_SLOT_AVG_128,
+        .ePrecisionMode  = AM_HAL_ADC_SLOT_14BIT,
+        .eChannel        = AM_HAL_ADC_SLOT_CHSEL_SE0,
+        .bWindowCompare  = false,
+        .bEnabled        = true,
+    },
+    .ADCDMAConfig = {
+        .bDynamicPriority = true;
+        .ePriority = AM_HAL_ADC_PRIOR_SERVICE_IMMED;
+        .bDMAEnable = true;
+        .ui32SampleCount = ADC_SAMPLE_BUF_SIZE;
+        .ui32TargetAddress = (uint32_t)g_ui32ADCSampleBuffer;
+    }
+};
+#endif
+
 const struct hal_flash *
 hal_bsp_flash_dev(uint8_t id)
 {
@@ -274,6 +318,13 @@ hal_bsp_init(void)
     rc = hal_i2c_init(5, (void *)&hal_bsp_i2c5m_cfg);
     assert(rc == 0);
 #endif
+
+#if MYNEWT_VAL(ADC_0)
+    rc = os_dev_create(&os_bsp_adc0.ad_dev, "adc0",
+                       OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
+                       apollo3_adc_dev_init, &os_bsp_adc0_config);
+    assert(rc == 0);
+#endif
 }
 
 void
@@ -290,13 +341,5 @@ hal_bsp_hw_id_len(void)
 int
 hal_bsp_hw_id(uint8_t *id, int max_len)
 {
-#if 0
-    if (max_len > sizeof(DEVID)) {
-        max_len = sizeof(DEVID);
-    }
-
-    memcpy(id, &DEVID, max_len);
-    return max_len;
-#endif
     return 0;
 }
