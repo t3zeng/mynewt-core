@@ -141,6 +141,10 @@ syscfg.defs:
         restrictions:
             - "!SPI_5_SLAVE"
             - "!SPI_5_MASTER"
+    
+    ADC_0:
+        description: 'ADC 0'
+        value: 0
 
     TIMER_0_SOURCE:
         description: >

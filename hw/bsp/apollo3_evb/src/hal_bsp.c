@@ -197,14 +197,20 @@ static struct adc_cfg os_bsp_adc0_config = {
         .bEnabled        = true,
     },
     .ADCDMAConfig = {
-        .bDynamicPriority = true;
-        .ePriority = AM_HAL_ADC_PRIOR_SERVICE_IMMED;
-        .bDMAEnable = true;
-        .ui32SampleCount = ADC_SAMPLE_BUF_SIZE;
-        .ui32TargetAddress = (uint32_t)g_ui32ADCSampleBuffer;
+        .bDynamicPriority = true,
+        .ePriority = AM_HAL_ADC_PRIOR_SERVICE_IMMED,
+        .bDMAEnable = true,
+        .ui32SampleCount = ADC_SAMPLE_BUF_SIZE,
+        .ui32TargetAddress = (uint32_t)g_ui32ADCSampleBuffer
     }
 };
 #endif
+struct adc_dev * hal_bsp_get_adc_dev(void) {
+#if MYNEWT_VAL(ADC_0)
+    return &os_bsp_adc0;
+#endif
+    return NULL;
+}
 
 const struct hal_flash *
 hal_bsp_flash_dev(uint8_t id)

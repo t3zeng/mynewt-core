@@ -221,7 +221,7 @@ apollo3_adc_release_buffer(struct adc_dev *dev, void *buf, int buf_len)
 
     cfg = ((struct adc_cfg *)(dev->ad_dev.od_init_arg))->ADCDMAConfig;
     cfg.bDMAEnable = false;
-    cfg.ui32TargetAddress = (uint32_t)buf1;
+    cfg.ui32TargetAddress = (uint32_t)buf;
     cfg.ui32SampleCount = buf_len/sizeof(am_hal_adc_sample_t);
 
     if (AM_HAL_STATUS_SUCCESS != am_hal_adc_configure_dma(apollo3_adc_handle, &cfg))
@@ -254,8 +254,7 @@ apollo3_adc_read_channel(struct adc_dev *dev, uint8_t cnum, int *result)
     int rc;
     int unlock = 0;
     struct adc_cfg * cfg= dev->ad_dev.od_init_arg;
-    uint32_t ui32SampleCount;
-    am_hal_adc_sample_t sample;
+    am_hal_adc_sample_t sample[cfg->ADCDMAConfig.ui32SampleCount];
 
     if (os_started()) {
         rc = os_mutex_pend(&dev->ad_lock, OS_TIMEOUT_NEVER);
@@ -265,16 +264,13 @@ apollo3_adc_read_channel(struct adc_dev *dev, uint8_t cnum, int *result)
         unlock = 1;
     }
 
-    dev->ad_dev.od_init_arg = (struct adc_cfg *)
-
-    ui32SampleCount = 1;
-    if (AM_HAL_STATUS_SUCCESS != am_hal_adc_samples_read(apollo3_adc_handle, true, cfg->ADCDMAConfig.ui32TargetAddress, &ui32SampleCount, &sample))
+    if (AM_HAL_STATUS_SUCCESS != am_hal_adc_samples_read(apollo3_adc_handle, true, (uint32_t *)cfg->ADCDMAConfig.ui32TargetAddress, &(cfg->ADCDMAConfig.ui32SampleCount), sample))
     {
         rc = OS_EINVAL;
         goto err;
     }
 
-    *result = (int) sample.ui32Sample;
+    *result = (int) sample[0].ui32Sample;
     rc = 0;
 
 err:

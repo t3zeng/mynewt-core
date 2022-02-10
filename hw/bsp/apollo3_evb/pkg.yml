@@ -34,5 +34,8 @@ pkg.deps:
     - "@apache-mynewt-core/hw/mcu/ambiq/apollo3"
     - "@apache-mynewt-core/libc/baselibc"
 
+pkg.deps.ADC_0:
+    - "@apache-mynewt-core/hw/drivers/adc/adc_apollo3"
+
 pkg.deps.UART_0:
     - "@apache-mynewt-core/hw/drivers/uart/uart_hal"
