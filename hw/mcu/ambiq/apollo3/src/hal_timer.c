@@ -51,7 +51,7 @@
  * is written.  This gap in time causes the timer interrupt to occur later than
  * it should.  This procedure is done in a critical section to minimize error.
  *
- * This somewhat convoluted scheme is required due to hardware limitations.
+ * This somewhat convoluted scheme is required due to hardware limitations. (Apollo3 Blue MCU Datasheet v1.01 section 13.2.7)
  * Ideally, each BSP timer would be implemented using a single continuous MCU
  * timer.  However, the MCU only allows a timer to generate a single interrupt
  * while it is running.  To schedule a second event, the timer would need to be
@@ -302,7 +302,7 @@ apollo3_timer_set_ocmp(const struct apollo3_timer *bsp_timer,
 }
 
 /**
- * Configures a BSP timer to generate an interrupt at the speficied absolute
+ * Configures a BSP timer to generate an interrupt at the specified absolute
  * time.
  */
 static void

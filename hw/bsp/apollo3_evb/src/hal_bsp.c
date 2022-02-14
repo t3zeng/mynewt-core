@@ -205,12 +205,6 @@ static struct adc_cfg os_bsp_adc0_config = {
     }
 };
 #endif
-struct adc_dev * hal_bsp_get_adc_dev(void) {
-#if MYNEWT_VAL(ADC_0)
-    return &os_bsp_adc0;
-#endif
-    return NULL;
-}
 
 const struct hal_flash *
 hal_bsp_flash_dev(uint8_t id)

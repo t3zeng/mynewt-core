@@ -40,8 +40,6 @@ extern uint8_t _ram_start;
 /* UART */
 #define UART_CNT        (2)
 
-struct adc_dev * hal_bsp_get_adc_dev(void);
-
 #ifdef __cplusplus
 }
 #endif
