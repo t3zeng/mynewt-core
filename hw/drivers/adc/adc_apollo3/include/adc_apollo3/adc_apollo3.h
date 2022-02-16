@@ -27,10 +27,43 @@
 extern "C" {
 #endif
 
+#define ADC_APOLLO3_TMR_NUM
+
+enum apollo3_adc_clock_num_e {
+    APOLLO3_ADC_CLOCK_0 = 0,
+    APOLLO3_ADC_CLOCK_1,
+    APOLLO3_ADC_CLOCK_2,
+    APOLLO3_ADC_CLOCK_3,
+    APOLLO3_ADC_CLOCK_CNT
+};
+
+enum apollo3_adc_timer_ab_e {
+    APOLLO3_ADC_TIMER_A = 0,
+    APOLLO3_ADC_TIMER_B,
+    APOLLO3_ADC_TIMER_BOTH
+};
+#define APOLLO3_ADC_TIMER_AB_CNT APOLLO3_ADC_TIMER_BOTH
+
+enum apollo3_adc_timer_func_e {
+    APOLLO3_ADC_TIMER_FUNC_ONCE = 0,
+    APOLLO3_ADC_TIMER_FUNC_REPEAT,
+    APOLLO3_ADC_TIMER_FUNC_PWM_ONCE,
+    APOLLO3_ADC_TIMER_FUNC_PWM_REPEAT,
+    APOLLO3_ADC_TIMER_FUNC_CONTINUOUS
+};
+
+struct apollo3_clk_cfg {
+    uint16_t clk_num:2; /* Clock number to use for ADC */
+    uint16_t timer_ab:2; /* A and B each hold 16 bits, you can use both for 32 bits */
+    uint16_t timer_func:3; /* Timers on apollo3 have 5 functions to choose from */
+    uint16_t res:9; /* reserved  */
+};
+
 struct adc_cfg {
     am_hal_adc_config_t ADCConfig;
     am_hal_adc_slot_config_t ADCSlotConfig;
     am_hal_adc_dma_config_t ADCDMAConfig;
+    struct apollo3_clk_cfg CLKConfig;
 };
 
 int apollo3_adc_dev_init(struct os_dev *, void *);

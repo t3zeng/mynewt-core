@@ -179,7 +179,7 @@ static const struct apollo3_i2c_cfg hal_bsp_i2c5m_cfg = {
 uint32_t g_ui32ADCSampleBuffer[ADC_SAMPLE_BUF_SIZE];
 
 static struct adc_dev os_bsp_adc0;
-static struct adc_cfg os_bsp_adc0_config = {
+static struct adc_cfg os_bsp_adc0_default_config = {
     .ADCConfig = {
         .eClock             = AM_HAL_ADC_CLKSEL_HFRC,
         .ePolarity          = AM_HAL_ADC_TRIGPOL_RISING,
@@ -202,6 +202,11 @@ static struct adc_cfg os_bsp_adc0_config = {
         .bDMAEnable = true,
         .ui32SampleCount = ADC_SAMPLE_BUF_SIZE,
         .ui32TargetAddress = (uint32_t)g_ui32ADCSampleBuffer
+    },
+    .CLKConfig = {
+        .clk_num = APOLLO3_ADC_CLOCK_3,
+        .timer_ab = APOLLO3_ADC_TIMER_A,
+        .timer_func = APOLLO3_ADC_TIMER_FUNC_REPEAT,
     }
 };
 #endif
@@ -322,7 +327,7 @@ hal_bsp_init(void)
 #if MYNEWT_VAL(ADC_0)
     rc = os_dev_create(&os_bsp_adc0.ad_dev, "adc0",
                        OS_DEV_INIT_KERNEL, OS_DEV_INIT_PRIO_DEFAULT,
-                       apollo3_adc_dev_init, &os_bsp_adc0_config);
+                       apollo3_adc_dev_init, &os_bsp_adc0_default_config);
     assert(rc == 0);
 #endif
 }
