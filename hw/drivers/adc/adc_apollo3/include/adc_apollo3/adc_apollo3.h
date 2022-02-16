@@ -53,6 +53,7 @@ enum apollo3_adc_timer_func_e {
 };
 
 struct apollo3_clk_cfg {
+    uint32_t clk_freq; /* Desired freq of clock */
     uint32_t clk_period; /* Period for ADC clock */
     uint32_t clk_on_time; /* Number of clocks in which output signal is high */
     uint8_t clk_num:3; /* Clock number to use for ADC */
@@ -61,10 +62,10 @@ struct apollo3_clk_cfg {
 };
 
 struct adc_cfg {
-    am_hal_adc_config_t ADCConfig;
-    am_hal_adc_slot_config_t ADCSlotConfig;
-    am_hal_adc_dma_config_t ADCDMAConfig;
-    struct apollo3_clk_cfg CLKConfig;
+    am_hal_adc_config_t adc_cfg;
+    am_hal_adc_slot_config_t adc_slot_cfg;
+    am_hal_adc_dma_config_t adc_dma_cfg;
+    struct apollo3_clk_cfg clk_cfg;
 };
 
 int apollo3_adc_dev_init(struct os_dev *, void *);

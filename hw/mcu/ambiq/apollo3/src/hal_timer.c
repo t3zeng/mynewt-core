@@ -60,7 +60,7 @@
  */
 
 #define APOLLO3_TIMER_ANY_ENABLED   \
-    (MYNEWT_VAL(TIMER_0_SOURCE) || MYNEWT_VAL(TIMER_1_SOURCE))
+    (MYNEWT_VAL(TIMER_0_SOURCE) || MYNEWT_VAL(TIMER_1_SOURCE) || MYNEWT_VAL(TIMER_ADC_SOURCE))
 
 struct apollo3_timer {
     TAILQ_HEAD(hal_timer_qhead, hal_timer) hal_timer_q;
@@ -72,6 +72,9 @@ struct apollo3_timer {
 
     /* Index of 'once' timer; used for scheduling interrupts. */
     uint8_t once_timer_idx;
+
+    /* True if clock is adc clock */
+    bool is_adc_clk;
 };
 
 /**
@@ -116,6 +119,7 @@ static struct apollo3_timer apollo3_timer_0 = {
     .hal_timer_q = TAILQ_HEAD_INITIALIZER(apollo3_timer_0.hal_timer_q),
     .cont_timer_idx = 0,
     .once_timer_idx = 1,
+    .is_adc_clk = false
 };
 #endif
 #if MYNEWT_VAL(TIMER_1_SOURCE)
@@ -123,6 +127,7 @@ static struct apollo3_timer apollo3_timer_1 = {
     .hal_timer_q = TAILQ_HEAD_INITIALIZER(apollo3_timer_1.hal_timer_q),
     .cont_timer_idx = 2,
     .once_timer_idx = 4,
+    .is_adc_clk = false
 };
 #endif
 #if MYNEWT_VAL(TIMER_ADC_SOURCE)
@@ -130,6 +135,7 @@ static struct apollo3_timer apollo3_timer_adc = {
     .hal_timer_q = TAILQ_HEAD_INITIALIZER(apollo3_timer_adc.hal_timer_q),
     .cont_timer_idx = 3,
     .once_timer_idx = 3,
+    .is_adc_clk = true
 };
 #endif
 
@@ -492,7 +498,7 @@ hal_timer_config(int timer_num, uint32_t freq_hz)
     int rc;
 
     bsp_timer = apollo3_timer_resolve(timer_num);
-    if (bsp_timer == NULL) {
+    if (bsp_timer == NULL || bsp_timer->is_adc_clk) {
         return SYS_EINVAL;
     }
 
@@ -501,7 +507,7 @@ hal_timer_config(int timer_num, uint32_t freq_hz)
     if (rc != 0) {
         return rc;
     }
-
+    
     /* Configure the continuous timer. */
     cont_cfg = sdk_cfg | AM_HAL_CTIMER_FN_CONTINUOUS;
     am_hal_ctimer_clear(bsp_timer->cont_timer_idx, AM_HAL_CTIMER_BOTH);

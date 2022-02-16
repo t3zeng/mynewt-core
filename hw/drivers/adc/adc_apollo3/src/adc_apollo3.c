@@ -143,16 +143,16 @@ apollo3_adc_open(struct os_dev *odev, uint32_t wait, void *arg)
     am_hal_adc_power_control(g_apollo3_adc_handle, AM_HAL_SYSCTRL_WAKE, false);
 
     /* Set up the ADC configuration parameters.*/
-    am_hal_adc_configure(g_apollo3_adc_handle, &(adc_config->ADCConfig));
+    am_hal_adc_configure(g_apollo3_adc_handle, &(adc_config->adc_cfg));
 
     /* ad_chan_count holds number of slots, each slot can configure a channel */
     for (int slot = 0; slot < dev->ad_chan_count; slot++) {
         /* Set up an ADC slot */
-        am_hal_adc_configure_slot(g_apollo3_adc_handle, slot, &(adc_config->ADCSlotConfig));
+        am_hal_adc_configure_slot(g_apollo3_adc_handle, slot, &(adc_config->adc_slot_cfg));
     }
 
     /* Configure the ADC to use DMA for the sample transfer. */
-    am_hal_adc_configure_dma(g_apollo3_adc_handle, &(adc_config->ADCDMAConfig));
+    am_hal_adc_configure_dma(g_apollo3_adc_handle, &(adc_config->adc_dma_cfg));
     g_bADCDMAComplete = false;
     g_bADCDMAError = false;
 
@@ -163,7 +163,7 @@ apollo3_adc_open(struct os_dev *odev, uint32_t wait, void *arg)
     am_hal_adc_enable(g_apollo3_adc_handle);
 
     /* Start timer for ADC measurements */
-    init_adc_timer(&(adc_config->CLKConfig));
+    init_adc_timer(&(adc_config->clk_cfg));
 
     /* Enable adc irq */
     NVIC_EnableIRQ(ADC_IRQn);
@@ -247,13 +247,13 @@ apollo3_adc_configure_channel(struct adc_dev *dev, uint8_t cnum, void *cfgdata)
     }
 
     /* Set up the ADC configuration parameters.*/
-    am_hal_adc_configure(g_apollo3_adc_handle, &(adc_config->ADCConfig));
+    am_hal_adc_configure(g_apollo3_adc_handle, &(adc_config->adc_cfg));
 
     /* Set up an ADC slot */
-    am_hal_adc_configure_slot(g_apollo3_adc_handle, cnum, &(adc_config->ADCSlotConfig));
+    am_hal_adc_configure_slot(g_apollo3_adc_handle, cnum, &(adc_config->adc_slot_cfg));
 
     /* Configure the ADC to use DMA for the sample transfer. */
-    am_hal_adc_configure_dma(g_apollo3_adc_handle, &(adc_config->ADCDMAConfig));
+    am_hal_adc_configure_dma(g_apollo3_adc_handle, &(adc_config->adc_dma_cfg));
     g_bADCDMAComplete = false;
     g_bADCDMAError = false;
 
@@ -261,8 +261,8 @@ apollo3_adc_configure_channel(struct adc_dev *dev, uint8_t cnum, void *cfgdata)
      * milivolts.
      */
     dev->ad_chans[cnum].c_cnum = cnum;
-    dev->ad_chans[cnum].c_res = adc_config->ADCSlotConfig.ePrecisionMode;
-    dev->ad_chans[cnum].c_refmv = adc_config->ADCConfig.eReference;
+    dev->ad_chans[cnum].c_res = adc_config->adc_slot_cfg.ePrecisionMode;
+    dev->ad_chans[cnum].c_refmv = adc_config->adc_cfg.eReference;
     dev->ad_chans[cnum].c_configured = 1;
 
     return 0;
@@ -283,7 +283,7 @@ apollo3_adc_set_buffer(struct adc_dev *dev, void *buf1, void *buf2, int buf_len)
         return OS_EINVAL;
     }
 
-    cfg = ((struct adc_cfg *)(dev->ad_dev.od_init_arg))->ADCDMAConfig;
+    cfg = ((struct adc_cfg *)(dev->ad_dev.od_init_arg))->adc_dma_cfg;
     cfg.bDynamicPriority = true;
     cfg.ePriority = AM_HAL_ADC_PRIOR_SERVICE_IMMED;
     cfg.bDMAEnable = true;
@@ -311,7 +311,7 @@ apollo3_adc_release_buffer(struct adc_dev *dev, void *buf, int buf_len)
         return OS_EINVAL;
     }
 
-    cfg = ((struct adc_cfg *)(dev->ad_dev.od_init_arg))->ADCDMAConfig;
+    cfg = ((struct adc_cfg *)(dev->ad_dev.od_init_arg))->adc_dma_cfg;
     cfg.bDMAEnable = false;
     cfg.ui32TargetAddress = (uint32_t)buf;
     cfg.ui32SampleCount = buf_len/sizeof(am_hal_adc_sample_t);
@@ -348,7 +348,7 @@ apollo3_adc_read_channel(struct adc_dev *dev, uint8_t cnum, int *result)
     int rc;
     int unlock = 0;
     struct adc_cfg * cfg= dev->ad_dev.od_init_arg;
-    am_hal_adc_sample_t sample[cfg->ADCDMAConfig.ui32SampleCount];
+    am_hal_adc_sample_t sample[cfg->adc_dma_cfg.ui32SampleCount];
 
     if (os_started()) {
         rc = os_mutex_pend(&dev->ad_lock, OS_TIMEOUT_NEVER);
@@ -358,7 +358,7 @@ apollo3_adc_read_channel(struct adc_dev *dev, uint8_t cnum, int *result)
         unlock = 1;
     }
 
-    memset(sample, 0, sizeof(am_hal_adc_sample_t)*cfg->ADCDMAConfig.ui32SampleCount);
+    memset(sample, 0, sizeof(am_hal_adc_sample_t)*cfg->adc_dma_cfg.ui32SampleCount);
 
     am_hal_adc_sw_trigger(g_apollo3_adc_handle);
 
@@ -366,13 +366,13 @@ apollo3_adc_read_channel(struct adc_dev *dev, uint8_t cnum, int *result)
     while(1) {
         assert(g_bADCDMAError != true);
         if (g_bADCDMAComplete) {
-            if (AM_HAL_STATUS_SUCCESS != am_hal_adc_samples_read(g_apollo3_adc_handle, true, (uint32_t *)cfg->ADCDMAConfig.ui32TargetAddress, &(cfg->ADCDMAConfig.ui32SampleCount), sample))
+            if (AM_HAL_STATUS_SUCCESS != am_hal_adc_samples_read(g_apollo3_adc_handle, true, (uint32_t *)cfg->adc_dma_cfg.ui32TargetAddress, &(cfg->adc_dma_cfg.ui32SampleCount), sample))
             {
                 rc = OS_EINVAL;
                 goto err;
             }
 
-            am_hal_adc_configure_dma(g_apollo3_adc_handle, &(cfg->ADCDMAConfig));
+            am_hal_adc_configure_dma(g_apollo3_adc_handle, &(cfg->adc_dma_cfg));
             g_bADCDMAComplete = false;
             g_bADCDMAError = false;
 
@@ -415,27 +415,20 @@ apollo3_adc_size_buffer(struct adc_dev *dev, int chans, int samples)
 
 void apollo3_irq_handler(void) {
     uint32_t ui32IntMask;
-    //
-    // Read the interrupt status.
-    //
+
+    /* Read the interrupt status. */
     am_hal_adc_interrupt_status(g_apollo3_adc_handle, &ui32IntMask, false);
 
-    //
-    // Clear the ADC interrupt.
-    //
+    /* Clear the ADC interrupt. */
     am_hal_adc_interrupt_clear(g_apollo3_adc_handle, ui32IntMask);
 
-    //
-    // If we got a DMA complete, set the flag.
-    //
+    /* If we got a DMA complete, set the flag. */
     if (ui32IntMask & AM_HAL_ADC_INT_DCMP)
     {
         g_bADCDMAComplete = true;
     }
 
-    //
-    // If we got a DMA error, set the flag.
-    //
+    /* If we got a DMA error, set the flag. */
     if (ui32IntMask & AM_HAL_ADC_INT_DERR)
     {
         g_bADCDMAError = true;

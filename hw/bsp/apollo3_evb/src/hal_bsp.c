@@ -180,7 +180,7 @@ uint32_t g_ui32ADCSampleBuffer[ADC_SAMPLE_BUF_SIZE];
 
 static struct adc_dev os_bsp_adc0;
 static struct adc_cfg os_bsp_adc0_default_config = {
-    .ADCConfig = {
+    .adc_cfg = {
         .eClock             = AM_HAL_ADC_CLKSEL_HFRC,
         .ePolarity          = AM_HAL_ADC_TRIGPOL_RISING,
         .eTrigger           = AM_HAL_ADC_TRIGSEL_SOFTWARE,
@@ -189,21 +189,22 @@ static struct adc_cfg os_bsp_adc0_default_config = {
         .ePowerMode         = AM_HAL_ADC_LPMODE0,
         .eRepeat            = AM_HAL_ADC_REPEATING_SCAN,
     },
-    .ADCSlotConfig = {
+    .adc_slot_cfg = {
         .eMeasToAvg      = AM_HAL_ADC_SLOT_AVG_128,
         .ePrecisionMode  = AM_HAL_ADC_SLOT_14BIT,
         .eChannel        = AM_HAL_ADC_SLOT_CHSEL_SE0,
         .bWindowCompare  = false,
         .bEnabled        = true,
     },
-    .ADCDMAConfig = {
+    .adc_dma_cfg = {
         .bDynamicPriority = true,
         .ePriority = AM_HAL_ADC_PRIOR_SERVICE_IMMED,
         .bDMAEnable = true,
         .ui32SampleCount = ADC_SAMPLE_BUF_SIZE,
         .ui32TargetAddress = (uint32_t)g_ui32ADCSampleBuffer
     },
-    .CLKConfig = {
+    .clk_cfg = {
+        .clk_freq = 12000000,
         .clk_period = 10,
         .clk_on_time = 5,
         .clk_num = APOLLO3_ADC_CLOCK_3,
