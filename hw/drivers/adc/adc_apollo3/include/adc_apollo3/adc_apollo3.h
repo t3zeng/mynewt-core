@@ -53,10 +53,11 @@ enum apollo3_adc_timer_func_e {
 };
 
 struct apollo3_clk_cfg {
-    uint16_t clk_num:2; /* Clock number to use for ADC */
-    uint16_t timer_ab:2; /* A and B each hold 16 bits, you can use both for 32 bits */
-    uint16_t timer_func:3; /* Timers on apollo3 have 5 functions to choose from */
-    uint16_t res:9; /* reserved  */
+    uint32_t clk_period; /* Period for ADC clock */
+    uint32_t clk_on_time; /* Number of clocks in which output signal is high */
+    uint8_t clk_num:3; /* Clock number to use for ADC */
+    uint8_t timer_ab:2; /* A and B each hold 16 bits, you can use both for 32 bits */
+    uint8_t timer_func:3; /* Timers on apollo3 have 5 functions to choose from */
 };
 
 struct adc_cfg {

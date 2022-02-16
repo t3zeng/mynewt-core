@@ -171,5 +171,19 @@ syscfg.defs:
                     APOLLO3_TIMER_SOURCE_BUCKA
         value:
 
+syscfg.defs.ADC_0:
+    TIMER_ADC_SOURCE:
+        description: >
+            Apollo3 CTIMER ADC source.  Valid values are:
+                    [empty-string] (Disable timer)
+                    APOLLO3_TIMER_SOURCE_HFRC
+                    APOLLO3_TIMER_SOURCE_XT
+                    APOLLO3_TIMER_SOURCE_LFRC
+                    APOLLO3_TIMER_SOURCE_RTC
+                    APOLLO3_TIMER_SOURCE_HCLK
+                    APOLLO3_TIMER_SOURCE_TMRPINA
+                    APOLLO3_TIMER_SOURCE_BUCKA
+        value: APOLLO3_TIMER_SOURCE_HFRC
+
 syscfg.vals:
     OS_TICKS_PER_SEC: 128

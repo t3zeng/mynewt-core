@@ -87,7 +87,7 @@ init_adc_timer(struct apollo3_clk_cfg *cfg)
     
     am_hal_ctimer_int_enable(timer_int);
 
-    am_hal_ctimer_period_set(cfg->clk_num, ctimer, 10, 5);
+    am_hal_ctimer_period_set(cfg->clk_num, ctimer, cfg->clk_period, cfg->clk_on_time);
 
     if (cfg->clk_num == APOLLO3_ADC_CLOCK_3) {
         /* Enable the timer A3 to trigger the ADC directly */

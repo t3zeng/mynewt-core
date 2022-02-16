@@ -204,6 +204,8 @@ static struct adc_cfg os_bsp_adc0_default_config = {
         .ui32TargetAddress = (uint32_t)g_ui32ADCSampleBuffer
     },
     .CLKConfig = {
+        .clk_period = 10,
+        .clk_on_time = 5,
         .clk_num = APOLLO3_ADC_CLOCK_3,
         .timer_ab = APOLLO3_ADC_TIMER_A,
         .timer_func = APOLLO3_ADC_TIMER_FUNC_REPEAT,
@@ -244,6 +246,11 @@ hal_bsp_init(void)
 #if MYNEWT_VAL(TIMER_1_SOURCE)
     timer_cfg.source = MYNEWT_VAL(TIMER_1_SOURCE);
     rc = hal_timer_init(1, &timer_cfg);
+    assert(rc == 0);
+#endif
+#if MYNEWT_VAL(TIMER_ADC_SOURCE)
+    timer_cfg.source = MYNEWT_VAL(TIMER_ADC_SOURCE);
+    rc = hal_timer_init(3, &timer_cfg);
     assert(rc == 0);
 #endif
 

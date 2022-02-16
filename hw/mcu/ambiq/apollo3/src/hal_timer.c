@@ -122,6 +122,13 @@ static struct apollo3_timer apollo3_timer_0 = {
 static struct apollo3_timer apollo3_timer_1 = {
     .hal_timer_q = TAILQ_HEAD_INITIALIZER(apollo3_timer_1.hal_timer_q),
     .cont_timer_idx = 2,
+    .once_timer_idx = 4,
+};
+#endif
+#if MYNEWT_VAL(TIMER_ADC_SOURCE)
+static struct apollo3_timer apollo3_timer_adc = {
+    .hal_timer_q = TAILQ_HEAD_INITIALIZER(apollo3_timer_adc.hal_timer_q),
+    .cont_timer_idx = 3,
     .once_timer_idx = 3,
 };
 #endif
@@ -135,6 +142,9 @@ apollo3_timer_resolve(int timer_num)
 #endif
 #if MYNEWT_VAL(TIMER_1_SOURCE)
         case 1:     return &apollo3_timer_1;
+#endif
+#if MYNEWT_VAL(TIMER_ADC_SOURCE)
+        case 3:     return &apollo3_timer_adc;
 #endif
         default:    return NULL;
     }
@@ -248,6 +258,11 @@ apollo3_timer_isr_cfg(const struct apollo3_timer *bsp_timer,
         return 0;
 #endif
 #if MYNEWT_VAL(TIMER_1_SOURCE)
+    case 4:
+        *out_isr_cfg = AM_HAL_CTIMER_INT_TIMERA4C0;
+        return 0;
+#endif
+#if MYNEWT_VAL(TIMER_ADC_SOURCE)
     case 3:
         *out_isr_cfg = AM_HAL_CTIMER_INT_TIMERA3C0;
         return 0;
@@ -402,6 +417,11 @@ apollo3_timer_isr(void)
 #if MYNEWT_VAL(TIMER_1_SOURCE)
     if (status & (AM_HAL_CTIMER_INT_TIMERA3C0 | AM_HAL_CTIMER_INT_TIMERA3C1)) {
         apollo3_timer_chk_queue(&apollo3_timer_1);
+    }
+#endif
+#if MYNEWT_VAL(TIMER_ADC_SOURCE)
+    if (status & AM_HAL_CTIMER_INT_TIMERA3C0) {
+        apollo3_timer_chk_queue(&apollo3_timer_adc);
     }
 #endif
 }
