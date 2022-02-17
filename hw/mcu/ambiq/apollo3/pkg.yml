@@ -34,3 +34,6 @@ pkg.deps:
     - "@apache-mynewt-core/hw/hal"
     - "@apache-mynewt-core/hw/mcu/ambiq"
     - "@apache-mynewt-core/hw/cmsis-core"
+
+pkg.deps.BLE_CONTROLLER:
+    - "@apache-mynewt-nimble/nimble/drivers/apollo3"
