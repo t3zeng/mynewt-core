@@ -324,60 +324,244 @@ hal_uart_init(int port, void *arg)
     am_hal_uart_control(uarts[port].uart_handle, AM_HAL_UART_CONTROL_CLKSEL, &eUartClockSpeed);
     am_hal_uart_configure(uarts[port].uart_handle, &g_sUartConfig);
 
-    switch (cfg->suc_pin_tx) {
-    case 22:
-        pincfg.uFuncSel = 0;
+    switch (port) {
+      case 0:
+        switch (cfg->suc_pin_tx) {
+          case 22:
+          case 39:
+          case 48:
+            pincfg.uFuncSel = 0;
+            break;
+          case 1:
+            pincfg.uFuncSel = 2;
+            break;
+          case 20:
+          case 30:
+            pincfg.uFuncSel = 4;
+            break;
+          case 7:
+            pincfg.uFuncSel = 5;
+            break;
+          case 16:
+          case 26:
+          case 28:
+          case 41:
+          case 44:
+            pincfg.uFuncSel = 6;
+            break;
+          default:
+            return SYS_EINVAL;
+        }
         break;
-    case 35:
-        pincfg.uFuncSel = 2;
+      case 1:
+        switch (cfg->suc_pin_tx) {
+          case 10:
+          case 24:
+          case 42:
+            pincfg.uFuncSel = 0;
+            break;
+          case 39:
+            pincfg.uFuncSel = 1;
+            break;
+          case 14:
+          case 35:
+            pincfg.uFuncSel = 2;
+            break;
+          case 20:
+          case 37:
+            pincfg.uFuncSel = 5;
+            break;
+          case 8:
+          case 18:
+          case 46:
+            pincfg.uFuncSel = 6;
+            break;
+          case 12:
+            pincfg.uFuncSel = 7;
+            break;
+          default:
+            return SYS_EINVAL;
+        }
         break;
-    default:
+      default:
         return SYS_EINVAL;
     }
     pincfg.eDriveStrength = AM_HAL_GPIO_PIN_DRIVESTRENGTH_2MA;
     am_hal_gpio_pinconfig(cfg->suc_pin_tx, pincfg);
 
-    switch (cfg->suc_pin_rx) {
-    case 23:
-        pincfg.uFuncSel = 0;
+    switch (port) {
+      case 0:
+        switch (cfg->suc_pin_rx) {
+          case 23:
+          case 27:
+          case 40:
+          case 49:
+            pincfg.uFuncSel = 0;
+            break;
+          case 2:
+            pincfg.uFuncSel = 2;
+            break;
+          case 21:
+          case 31:
+            pincfg.uFuncSel = 4;
+            break;
+          case 11:
+          case 17:
+          case 29:
+          case 34:
+          case 45:
+            pincfg.uFuncSel = 6;
+            break;
+          default:
+            return SYS_EINVAL;
+        }
         break;
-    case 36:
-        pincfg.uFuncSel = 2;
+      case 1:
+        switch (cfg->suc_pin_rx) {
+          case 2:
+          case 25:
+          case 43:
+            pincfg.uFuncSel = 0;
+            break;
+          case 40:
+            pincfg.uFuncSel = 1;
+            break;
+          case 15:
+          case 36:
+            pincfg.uFuncSel = 2;
+            break;
+          case 4:
+          case 21:
+            pincfg.uFuncSel = 5;
+            break;
+          case 9:
+          case 19:
+          case 38:
+          case 47:
+            pincfg.uFuncSel = 6;
+            break;
+          case 13:
+            pincfg.uFuncSel = 7;
+            break;
+          default:
+            return SYS_EINVAL;
+        }
         break;
-    default:
+      default:
         return SYS_EINVAL;
     }
     am_hal_gpio_pinconfig(cfg->suc_pin_rx, pincfg);
 
     /* RTS pin is optional. */
-    if (cfg->suc_pin_rts != 0) {
-        switch (cfg->suc_pin_rts) {
-        case 44:
-            pincfg.uFuncSel = 0;
-            break;
-        case 37:
-            pincfg.uFuncSel = 2;
-            break;
+    if (cfg->suc_pin_rts >= 0) {
+      switch (port) {
+        case 0:
+          switch (cfg->suc_pin_rts) {
+            case 3:
+              pincfg.uFuncSel = 0;
+              break;
+            case 5:
+            case 37:
+              pincfg.uFuncSel = 2;
+              break;
+            case 18:
+              pincfg.uFuncSel = 4;
+              break;
+            case 34:
+              pincfg.uFuncSel = 5;
+              break;
+            case 13:
+            case 35:
+              pincfg.uFuncSel = 6;
+              break;
+            case 41:
+              pincfg.uFuncSel = 7;
+              break;
+            default:
+              return SYS_EINVAL;
+          }
+          break;
+        case 1:
+          switch (cfg->suc_pin_rts) {
+            case 44:
+              pincfg.uFuncSel = 0;
+              break;
+            case 34:
+              pincfg.uFuncSel = 2;
+              break;
+            case 10:
+            case 30:
+            case 41:
+              pincfg.uFuncSel = 5;
+              break;
+            case 16:
+            case 20:
+            case 31:
+              pincfg.uFuncSel = 7;
+              break;
+            default:
+              return SYS_EINVAL;
+          }
+          break;
         default:
-            return SYS_EINVAL;
-        }
-        pincfg.eDriveStrength = AM_HAL_GPIO_PIN_DRIVESTRENGTH_2MA;
-        am_hal_gpio_pinconfig(cfg->suc_pin_rts, pincfg);
+          return SYS_EINVAL;
+      }
+      pincfg.eDriveStrength = AM_HAL_GPIO_PIN_DRIVESTRENGTH_2MA;
+      am_hal_gpio_pinconfig(cfg->suc_pin_rts, pincfg);
     }
 
     /* CTS pin is optional. */
-    if (cfg->suc_pin_cts != 0) {
-        switch (cfg->suc_pin_cts) {
-        case 45:
-            pincfg.uFuncSel = 0;
-            break;
-        case 38:
-            pincfg.uFuncSel = 2;
-            break;
+    if (cfg->suc_pin_cts >= 0) {
+      switch (port) {
+        case 0:
+          switch (cfg->suc_pin_cts) {
+            case 4:
+              pincfg.uFuncSel = 0;
+              break;
+            case 6:
+            case 38:
+              pincfg.uFuncSel = 2;
+              break;
+            case 24:
+            case 29:
+              pincfg.uFuncSel = 4;
+              break;
+            case 33:
+              pincfg.uFuncSel = 5;
+              break;
+            case 12:
+            case 36:
+              pincfg.uFuncSel = 6;
+              break;
+            default:
+              return SYS_EINVAL;
+          }
+          break;
+        case 1:
+          switch (cfg->suc_pin_cts) {
+            case 45:
+              pincfg.uFuncSel = 0;
+              break;
+            case 11:
+            case 29:
+            case 36:
+            case 41:
+              pincfg.uFuncSel = 5;
+              break;
+            case 17:
+            case 21:
+            case 26:
+            case 32:
+              pincfg.uFuncSel = 7;
+              break;
+            default:
+              return SYS_EINVAL;
+          }
+          break;
         default:
-            return SYS_EINVAL;
-        }
-        am_hal_gpio_pinconfig(cfg->suc_pin_cts, pincfg);
+          return SYS_EINVAL;
+      }
+      am_hal_gpio_pinconfig(cfg->suc_pin_cts, pincfg);
     }
 
     apollo3_uart_set_nvic(port);

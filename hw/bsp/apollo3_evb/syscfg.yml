@@ -48,189 +48,6 @@ syscfg.defs:
         description: 'Pin for LED4'
         value: 17
         
-    UART_0_PIN_TX:
-        description: 'TX pin for UART0'
-        value: 22
-    UART_0_PIN_RX:
-        description: 'RX pin for UART0'
-        value: 23
-    UART_0_PIN_RTS:
-        description: 'RTS pin for UART0'
-        value: 37
-    UART_0_PIN_CTS:
-        description: 'CTS pin for UART0'
-        value: 38
-    
-    UART_1_PIN_TX:
-        description: 'TX pin for UART1'
-        value: 35
-    UART_1_PIN_RX:
-        description: 'RX pin for UART1'
-        value: 36
-    UART_1_PIN_RTS:
-        description: 'RTS pin for UART1'
-        value: 44
-    UART_1_PIN_CTS:
-        description: 'CTS pin for UART1'
-        value: 45
-    
-    SPI_0_PIN_CS:
-        description: 'SPI Chip Select pin for IO Master 0'
-        value: 11
-    SPI_0_PIN_CS3:
-        description: 'SPI Chip Select pin for IO Master 0'
-        value: 15
-    SPI_0_MASTER_PIN_SCK:
-        description: 'SPI SCK pin for IO Master 0'
-        value:  5
-    SPI_0_MASTER_PIN_MOSI:
-        description: 'SPI MOSI pin for IO Master 0'
-        value:  7
-    SPI_0_MASTER_PIN_MISO:
-        description: 'SPI MISO pin for IO Master 0'
-        value:  6
-    
-    I2C_0_PIN_SCL:
-        description: 'I2C SCL pin for IO Master 0'
-        value:  5
-    I2C_0_PIN_SDA:
-        description: 'I2C SDA pin for IO Master 0'
-        value:  6
-    
-    SPI_1_PIN_CS:
-        description: 'SPI Chip Select pin for IO Master 1'
-        value: 14
-    SPI_1_MASTER_PIN_SCK:
-        description: 'SPI SCK pin for IO Master 1'
-        value:  8
-    SPI_1_MASTER_PIN_MOSI:
-        description: 'SPI MOSI pin for IO Master 1'
-        value:  10
-    SPI_1_MASTER_PIN_MISO:
-        description: 'SPI MISO pin for IO Master 1'
-        value:  9
-    
-    I2C_1_PIN_SCL:
-        description: 'I2C SCL pin for IO Master 1'
-        value:  8
-    I2C_1_PIN_SDA:
-        description: 'I2C SDA pin for IO Master 1'
-        value:  9
-
-    SPI_2_PIN_CS:
-        description: 'SPI Chip Select pin for IO Master 2'
-        value: 15
-    SPI_2_MASTER_PIN_SCK:
-        description: 'SPI SCK pin for IO Master 2'
-        value:  27
-    SPI_2_MASTER_PIN_MOSI:
-        description: 'SPI MOSI pin for IO Master 2'
-        value:  28
-    SPI_2_MASTER_PIN_MISO:
-        description: 'SPI MISO pin for IO Master 2'
-        value:  25
-    
-    I2C_2_PIN_SCL:
-        description: 'I2C SCL pin for IO Master 2'
-        value:  27
-    I2C_2_PIN_SDA:
-        description: 'I2C SDA pin for IO Master 2'
-        value:  25
-
-    SPI_3_PIN_CS:
-        description: 'SPI Chip Select pin for IO Master 3'
-        value: 12
-    SPI_3_MASTER_PIN_SCK:
-        description: 'SPI SCK pin for IO Master 3'
-        value:  42
-    SPI_3_MASTER_PIN_MOSI:
-        description: 'SPI MOSI pin for IO Master 3'
-        value:  38
-    SPI_3_MASTER_PIN_MISO:
-        description: 'SPI MISO pin for IO Master 3'
-        value:  43
-    
-    I2C_3_PIN_SCL:
-        description: 'I2C SCL pin for IO Master 3'
-        value:  42
-    I2C_3_PIN_SDA:
-        description: 'I2C SDA pin for IO Master 3'
-        value:  43
-
-    SPI_4_PIN_CS:
-        description: 'SPI Chip Select pin for IO Master 4'
-        value: 13
-    SPI_4_MASTER_PIN_SCK:
-        description: 'SPI SCK pin for IO Master 4'
-        value:  39
-    SPI_4_MASTER_PIN_MOSI:
-        description: 'SPI MOSI pin for IO Master 4'
-        value:  44
-    SPI_4_MASTER_PIN_MISO:
-        description: 'SPI MISO pin for IO Master 4'
-        value:  40
-    
-    I2C_4_PIN_SCL:
-        description: 'I2C SCL pin for IO Master 4'
-        value:  39
-    I2C_4_PIN_SDA:
-        description: 'I2C SDA pin for IO Master 4'
-        value:  40
-
-    SPI_5_PIN_CS:
-        description: 'SPI Chip Select pin for IO Master 5'
-        value: 16
-    SPI_5_MASTER_PIN_SCK:
-        description: 'SPI SCK pin for IO Master 5'
-        value:  48
-    SPI_5_MASTER_PIN_MOSI:
-        description: 'SPI MOSI pin for IO Master 5'
-        value:  47
-    SPI_5_MASTER_PIN_MISO:
-        description: 'SPI MISO pin for IO Master 5'
-        value:  49
-    
-    I2C_5_PIN_SCL:
-        description: 'I2C SCL pin for IO Master 5'
-        value:  48
-    I2C_5_PIN_SDA:
-        description: 'I2C SDA pin for IO Master 5'
-        value:  49
-    
-    MSPI_CE_0_PIN:
-        description: 'MSPI pin for chip enable 0'
-        value: 19
-    MSPI_CE_1_PIN:
-        description: 'MSPI pin for chip enable 1'
-        value: 41
-    MSPI_DATA_0_PIN:
-        description: 'MSPI pin for data 0'
-        value: 22
-    MSPI_DATA_1_PIN:
-        description: 'MSPI pin for data 1'
-        value: 26
-    MSPI_DATA_2_PIN:
-        description: 'MSPI pin for data 2'
-        value: 4
-    MSPI_DATA_3_PIN:
-        description: 'MSPI pin for data 3'
-        value: 23
-    MSPI_DATA_4_PIN:
-        description: 'MSPI pin for data 4'
-        value: 0
-    MSPI_DATA_5_PIN:
-        description: 'MSPI pin for data 5'
-        value: 1
-    MSPI_DATA_6_PIN:
-        description: 'MSPI pin for data 6'
-        value: 2
-    MSPI_DATA_7_PIN:
-        description: 'MSPI pin for data 7'
-        value: 3
-    MSPI_SCK_PIN:
-        description: 'MSPI pin for SCK'
-        value: 24
-    
     IOS_CE_PIN:
         description: 'IOS Chip Select'
         value: 3
@@ -280,6 +97,18 @@ syscfg.defs:
         value: 21
 
 syscfg.vals:
+    UART_0: 1
+    UART_0_PIN_TX: 22
+    UART_0_PIN_RX: 23
+    UART_0_PIN_RTS: 37
+    UART_0_PIN_CTS: 38
+    
+    UART_1: 1
+    UART_1_PIN_TX: 35
+    UART_1_PIN_RX: 36
+    UART_1_PIN_RTS: 44
+    UART_1_PIN_CTS: 45
+    
     CONFIG_FCB_FLASH_AREA: FLASH_AREA_NFFS
     REBOOT_LOG_FLASH_AREA: FLASH_AREA_REBOOT_LOG
     NFFS_FLASH_AREA: FLASH_AREA_NFFS

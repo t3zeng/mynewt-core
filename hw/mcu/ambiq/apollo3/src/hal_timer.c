@@ -60,7 +60,7 @@
  */
 
 #define APOLLO3_TIMER_ANY_ENABLED   \
-    (MYNEWT_VAL(TIMER_0_SOURCE) || MYNEWT_VAL(TIMER_1_SOURCE) || MYNEWT_VAL(TIMER_ADC_SOURCE))
+    (MYNEWT_VAL(TIMER_0) || MYNEWT_VAL(TIMER_1) || MYNEWT_VAL(ADC_0))
 
 struct apollo3_timer {
     TAILQ_HEAD(hal_timer_qhead, hal_timer) hal_timer_q;
@@ -114,7 +114,7 @@ static const struct apollo3_timer_freq_entry apollo3_timer_tbl_lfrc[] = {
     { 0 },
 };
 
-#if MYNEWT_VAL(TIMER_0_SOURCE)
+#if MYNEWT_VAL(TIMER_0)
 static struct apollo3_timer apollo3_timer_0 = {
     .hal_timer_q = TAILQ_HEAD_INITIALIZER(apollo3_timer_0.hal_timer_q),
     .cont_timer_idx = 0,
@@ -122,7 +122,7 @@ static struct apollo3_timer apollo3_timer_0 = {
     .is_adc_clk = false
 };
 #endif
-#if MYNEWT_VAL(TIMER_1_SOURCE)
+#if MYNEWT_VAL(TIMER_1)
 static struct apollo3_timer apollo3_timer_1 = {
     .hal_timer_q = TAILQ_HEAD_INITIALIZER(apollo3_timer_1.hal_timer_q),
     .cont_timer_idx = 2,
@@ -130,7 +130,7 @@ static struct apollo3_timer apollo3_timer_1 = {
     .is_adc_clk = false
 };
 #endif
-#if MYNEWT_VAL(TIMER_ADC_SOURCE)
+#if MYNEWT_VAL(ADC_0)
 static struct apollo3_timer apollo3_timer_adc = {
     .hal_timer_q = TAILQ_HEAD_INITIALIZER(apollo3_timer_adc.hal_timer_q),
     .cont_timer_idx = 3,
@@ -143,13 +143,13 @@ static struct apollo3_timer *
 apollo3_timer_resolve(int timer_num)
 {
     switch (timer_num) {
-#if MYNEWT_VAL(TIMER_0_SOURCE)
+#if MYNEWT_VAL(TIMER_0)
         case 0:     return &apollo3_timer_0;
 #endif
-#if MYNEWT_VAL(TIMER_1_SOURCE)
+#if MYNEWT_VAL(TIMER_1)
         case 1:     return &apollo3_timer_1;
 #endif
-#if MYNEWT_VAL(TIMER_ADC_SOURCE)
+#if MYNEWT_VAL(ADC_0)
         case 3:     return &apollo3_timer_adc;
 #endif
         default:    return NULL;
@@ -258,17 +258,17 @@ apollo3_timer_isr_cfg(const struct apollo3_timer *bsp_timer,
                       uint32_t *out_isr_cfg)
 {
     switch (bsp_timer->once_timer_idx) {
-#if MYNEWT_VAL(TIMER_0_SOURCE)
+#if MYNEWT_VAL(TIMER_0)
     case 1:
         *out_isr_cfg = AM_HAL_CTIMER_INT_TIMERA1C0;
         return 0;
 #endif
-#if MYNEWT_VAL(TIMER_1_SOURCE)
+#if MYNEWT_VAL(TIMER_1)
     case 4:
         *out_isr_cfg = AM_HAL_CTIMER_INT_TIMERA4C0;
         return 0;
 #endif
-#if MYNEWT_VAL(TIMER_ADC_SOURCE)
+#if MYNEWT_VAL(ADC_0)
     case 3:
         *out_isr_cfg = AM_HAL_CTIMER_INT_TIMERA3C0;
         return 0;
@@ -415,17 +415,17 @@ apollo3_timer_isr(void)
     am_hal_ctimer_int_clear(status);
 
     /* Service the appropriate timers. */
-#if MYNEWT_VAL(TIMER_0_SOURCE)
+#if MYNEWT_VAL(TIMER_0)
     if (status & (AM_HAL_CTIMER_INT_TIMERA1C0 | AM_HAL_CTIMER_INT_TIMERA1C1)) {
         apollo3_timer_chk_queue(&apollo3_timer_0);
     }
 #endif
-#if MYNEWT_VAL(TIMER_1_SOURCE)
+#if MYNEWT_VAL(TIMER_1)
     if (status & (AM_HAL_CTIMER_INT_TIMERA3C0 | AM_HAL_CTIMER_INT_TIMERA3C1)) {
         apollo3_timer_chk_queue(&apollo3_timer_1);
     }
 #endif
-#if MYNEWT_VAL(TIMER_ADC_SOURCE)
+#if MYNEWT_VAL(ADC_0)
     if (status & AM_HAL_CTIMER_INT_TIMERA3C0) {
         apollo3_timer_chk_queue(&apollo3_timer_adc);
     }
@@ -507,7 +507,7 @@ hal_timer_config(int timer_num, uint32_t freq_hz)
     if (rc != 0) {
         return rc;
     }
-    
+
     /* Configure the continuous timer. */
     cont_cfg = sdk_cfg | AM_HAL_CTIMER_FN_CONTINUOUS;
     am_hal_ctimer_clear(bsp_timer->cont_timer_idx, AM_HAL_CTIMER_BOTH);

@@ -32,65 +32,49 @@
 #undef IOSLAVE
 #undef CLKGEN
 
-#define SPI_0_ENABLED (MYNEWT_VAL(SPI_0_MASTER) || MYNEWT_VAL(SPI_0_SLAVE))
-#define SPI_1_ENABLED (MYNEWT_VAL(SPI_1_MASTER) || MYNEWT_VAL(SPI_1_SLAVE))
-#define SPI_2_ENABLED (MYNEWT_VAL(SPI_2_MASTER) || MYNEWT_VAL(SPI_2_SLAVE))
-#define SPI_3_ENABLED (MYNEWT_VAL(SPI_3_MASTER) || MYNEWT_VAL(SPI_3_SLAVE))
-#define SPI_4_ENABLED (MYNEWT_VAL(SPI_4_MASTER) || MYNEWT_VAL(SPI_4_SLAVE))
-#define SPI_5_ENABLED (MYNEWT_VAL(SPI_5_MASTER) || MYNEWT_VAL(SPI_5_SLAVE))
-
-#define SPI_ANY_ENABLED (       \
-    SPI_0_ENABLED ||            \
-    SPI_1_ENABLED ||            \
-    SPI_2_ENABLED ||            \
-    SPI_3_ENABLED ||            \
-    SPI_4_ENABLED ||            \
-    SPI_5_ENABLED)
-
-#if SPI_ANY_ENABLED
-
-#define SPI_N_MASTER (          \
-    MYNEWT_VAL(SPI_0_MASTER) || \
-    MYNEWT_VAL(SPI_1_MASTER) || \
-    MYNEWT_VAL(SPI_2_MASTER) || \
-    MYNEWT_VAL(SPI_3_MASTER) || \
-    MYNEWT_VAL(SPI_4_MASTER) || \
+#define SPI_MASTER_ANY_ENABLED ( \
+    MYNEWT_VAL(SPI_0_MASTER) ||  \
+    MYNEWT_VAL(SPI_1_MASTER) ||  \
+    MYNEWT_VAL(SPI_2_MASTER) ||  \
+    MYNEWT_VAL(SPI_3_MASTER) ||  \
+    MYNEWT_VAL(SPI_4_MASTER) ||  \
     MYNEWT_VAL(SPI_5_MASTER))
 
-#define SPI_N_SLAVE (           \
-    MYNEWT_VAL(SPI_0_SLAVE) ||  \
-    MYNEWT_VAL(SPI_1_SLAVE) ||  \
-    MYNEWT_VAL(SPI_2_SLAVE) ||  \
-    MYNEWT_VAL(SPI_3_SLAVE) ||  \
-    MYNEWT_VAL(SPI_4_SLAVE) ||  \
-    MYNEWT_VAL(SPI_5_SLAVE))
+#define SPI_SLAVE_ANY_ENABLED ( \
+    MYNEWT_VAL(SPI_0_SLAVE))
+
+#if SPI_MASTER_ANY_ENABLED || SPI_SLAVE_ANY_ENABLED
 
 struct apollo3_spi {
     uint8_t spi_num;
     uint8_t spi_type;
+    int8_t  ss_pin[4];
     void *spi_handle;
+
+    int8_t cur_ss_pin;
+    bool  cont_tx;
 
     hal_spi_txrx_cb txrx_cb_func;
     void *txrx_cb_arg;
 };
 
-#if SPI_0_ENABLED
-static struct apollo3_spi apollo3_spi0;
+#if MYNEWT_VAL(SPI_0_MASTER)
+static struct apollo3_spi apollo3_spi0_master;
 #endif
-#if SPI_1_ENABLED
-static struct apollo3_spi apollo3_spi1;
+#if MYNEWT_VAL(SPI_1_MASTER)
+static struct apollo3_spi apollo3_spi1_master;
 #endif
-#if SPI_2_ENABLED
-static struct apollo3_spi apollo3_spi2;
+#if MYNEWT_VAL(SPI_2_MASTER)
+static struct apollo3_spi apollo3_spi2_master;
 #endif
-#if SPI_3_ENABLED
-static struct apollo3_spi apollo3_spi3;
+#if MYNEWT_VAL(SPI_3_MASTER)
+static struct apollo3_spi apollo3_spi3_master;
 #endif
-#if SPI_4_ENABLED
-static struct apollo3_spi apollo3_spi4;
+#if MYNEWT_VAL(SPI_4_MASTER)
+static struct apollo3_spi apollo3_spi4_master;
 #endif
-#if SPI_5_ENABLED
-static struct apollo3_spi apollo3_spi5;
+#if MYNEWT_VAL(SPI_5_MASTER)
+static struct apollo3_spi apollo3_spi5_master;
 #endif
 
 static am_hal_iom_config_t g_sIOMSpiConfig =
@@ -129,29 +113,29 @@ static struct apollo3_spi *
 apollo3_spi_resolve(int spi_num)
 {
     switch (spi_num) {
-#if SPI_0_ENABLED
+#if MYNEWT_VAL(SPI_0_MASTER)
     case 0:
-        return &apollo3_spi0;
+        return &apollo3_spi0_master;
 #endif
-#if SPI_1_ENABLED
+#if MYNEWT_VAL(SPI_1_MASTER)
     case 1:
-        return &apollo3_spi1;
+        return &apollo3_spi1_master;
 #endif
-#if SPI_2_ENABLED
+#if MYNEWT_VAL(SPI_2_MASTER)
     case 2:
-        return &apollo3_spi2;
+        return &apollo3_spi2_master;
 #endif
-#if SPI_3_ENABLED
+#if MYNEWT_VAL(SPI_3_MASTER)
     case 3:
-        return &apollo3_spi3;
+        return &apollo3_spi3_master;
 #endif
-#if SPI_4_ENABLED
+#if MYNEWT_VAL(SPI_4_MASTER)
     case 4:
-        return &apollo3_spi4;
+        return &apollo3_spi4_master;
 #endif
-#if SPI_5_ENABLED
+#if MYNEWT_VAL(SPI_5_MASTER)
     case 5:
-        return &apollo3_spi5;
+        return &apollo3_spi5_master;
 #endif
     default:
         return NULL;
@@ -216,12 +200,14 @@ hal_spi_config_slave(int spi_num, const struct hal_spi_settings *settings)
 static int
 hal_spi_pin_config_master(int spi_num, const struct apollo3_spi_cfg *pins)
 {
-    const uint8_t miso = pins->miso_pin;
-    const uint8_t mosi = pins->mosi_pin;
-    const uint8_t sck = pins->sck_pin;
+#if SPI_MASTER_ANY_ENABLED
+    const int8_t miso = pins->miso_pin;
+    const int8_t mosi = pins->mosi_pin;
+    const int8_t sck = pins->sck_pin;
+#endif
 
     switch (spi_num) {
-#if SPI_0_ENABLED
+#if MYNEWT_VAL(SPI_0_MASTER)
     case 0:
         if (sck == 5 && miso == 6 && mosi == 7) {
             return 1;
@@ -229,7 +215,7 @@ hal_spi_pin_config_master(int spi_num, const struct apollo3_spi_cfg *pins)
             return -1;
         }
 #endif
-#if SPI_1_ENABLED
+#if MYNEWT_VAL(SPI_1_MASTER)
     case 1:
         if (sck == 8 && miso == 9 && mosi == 10) {
             return 1;
@@ -237,15 +223,15 @@ hal_spi_pin_config_master(int spi_num, const struct apollo3_spi_cfg *pins)
             return -1;
         }
 #endif
-#if SPI_2_ENABLED
+#if MYNEWT_VAL(SPI_2_MASTER)
     case 2:
-        if (sck == 27 && miso == 28 && mosi == 25) {
+        if (sck == 27 && miso == 25 && mosi == 28) {
             return 5;
         } else {
             return -1;
         }
 #endif
-#if SPI_3_ENABLED
+#if MYNEWT_VAL(SPI_3_MASTER)
     case 3:
         if (sck == 42 && miso == 43 && mosi == 38) {
             return 5;
@@ -253,7 +239,7 @@ hal_spi_pin_config_master(int spi_num, const struct apollo3_spi_cfg *pins)
             return -1;
         }
 #endif
-#if SPI_4_ENABLED
+#if MYNEWT_VAL(SPI_4_MASTER)
     case 4:
         if (sck == 39 && miso == 40 && mosi == 44) {
             return 5;
@@ -261,7 +247,7 @@ hal_spi_pin_config_master(int spi_num, const struct apollo3_spi_cfg *pins)
             return -1;
         }
 #endif
-#if SPI_5_ENABLED
+#if MYNEWT_VAL(SPI_5_MASTER)
     case 5:
         if (sck == 48 && miso == 49 && mosi == 47) {
             return 5;
@@ -275,38 +261,406 @@ hal_spi_pin_config_master(int spi_num, const struct apollo3_spi_cfg *pins)
 }
 
 static int
-hal_spi_pin_config(int spi_num, int master, const struct apollo3_spi_cfg *pins)
+hal_spi_pin_config_slave(int spi_num, const struct apollo3_spi_cfg *pins)
 {
-    if (master) {
-        return hal_spi_pin_config_master(spi_num, pins);
-    } else {
+#if SPI_SLAVE_ANY_ENABLED
+    const int8_t miso = pins->miso_pin;
+    const int8_t mosi = pins->mosi_pin;
+    const int8_t sck = pins->sck_pin;
+#endif
+
+    switch (spi_num) {
+#if MYNEWT_VAL(SPI_0_SLAVE)
+    case 0:
+        if (sck == 0 && miso == 2 && mosi == 1) {
+            return 1;
+        } else {
+            return -1;
+        }
+#endif
+    default:
         return -1;
     }
 }
 
-static uint32_t get_uNCE(int spi_num) {
-    switch(spi_num) {
-        case 0: 
-        case 3:
-        case 5:
-            return 0;
-        case 1:
-            return 2;
-        case 2:
-            return 3;
-        case 4:
+static int
+hal_spi_ss_pin_config_master(int spi_num, int8_t ss_pin)
+{
+  switch (ss_pin) {
+    case 7:
+    case 41:
+      return 0;
+    case 11:
+    case 12:
+    case 13:
+    case 14:
+    case 15:
+    case 16:
+    case 17:
+    case 18:
+    case 19:
+    case 20:
+    case 21:
+    case 22:
+    case 23:
+    case 24:
+    case 25:
+    case 26:
+    case 27:
+    case 28:
+    case 29:
+    case 30:
+    case 31:
+    case 32:
+    case 33:
+    case 34:
+    case 35:
+    case 36:
+    case 37:
+    case 38:
+    case 42:
+    case 43:
+    case 44:
+    case 45:
+    case 46:
+    case 47:
+    case 48:
+    case 49:
+      return 1;
+    case 3:
+    case 4:
+    case 8:
+    case 9:
+    case 10:
+      return 2;
+    case 0:
+    case 1:
+    case 2:
+      return 7;
+    default:
+      return -1;
+  }
+}
+
+static int
+hal_spi_ss_pin_config_slave(int spi_num, int8_t ss_pin)
+{
+    switch (spi_num) {
+#if MYNEWT_VAL(SPI_0_SLAVE)
+    case 0:
+        switch (ss_pin) {
+          case 3:
             return 1;
+          default:
+            return -1;
+        }
+#endif
+    default:
+      return -1;
+    }
+}
+
+static uint32_t
+hal_spi_get_uNCE(int spi_num, int ss_pin) {
+    switch(spi_num) {
+#if MYNEWT_VAL(SPI_0_MASTER)
+        case 0:
+          switch (ss_pin) {
+            case 8:
+            case 11:
+            case 16:
+            case 23:
+            case 31:
+            case 35:
+            case 42:
+              return 0;
+            case 13:
+            case 17:
+            case 24:
+            case 32:
+            case 41:
+            case 43:
+            case 47:
+              return 1;
+            case 1:
+            case 14:
+            case 18:
+            case 25:
+            case 33:
+            case 37:
+            case 44:
+            case 48:
+              return 2;
+            case 15:
+            case 19:
+            case 22:
+            case 30:
+            case 34:
+            case 38:
+            case 49:
+              return 3;
+            default:
+              return -1;
+          }
+#endif
+#if MYNEWT_VAL(SPI_1_MASTER)
+        case 1:
+          switch (ss_pin) {
+            case 11:
+            case 16:
+            case 23:
+            case 27:
+            case 31:
+            case 35:
+            case 42:
+              return 0;
+            case 4:
+            case 17:
+            case 24:
+            case 32:
+            case 41:
+            case 43:
+            case 47:
+              return 1;
+            case 1:
+            case 14:
+            case 18:
+            case 29:
+            case 33:
+            case 44:
+            case 48:
+              return 2;
+            case 0:
+            case 15:
+            case 19:
+            case 26:
+            case 34:
+            case 38:
+            case 45:
+            case 49:
+              return 3;
+            default:
+              return -1;
+          }
+#endif
+#if MYNEWT_VAL(SPI_2_MASTER)
+        case 2:
+          switch (ss_pin) {
+            case 3:
+            case 11:
+            case 16:
+            case 23:
+            case 31:
+            case 35:
+            case 42:
+              return 0;
+            case 2:
+            case 17:
+            case 20:
+            case 24:
+            case 32:
+            case 41:
+            case 43:
+            case 47:
+              return 1;
+            case 1:
+            case 14:
+            case 18:
+            case 21:
+            case 33:
+            case 44:
+            case 48:
+              return 2;
+            case 9:
+            case 15:
+            case 34:
+            case 38:
+            case 49:
+              return 3;
+            default:
+              return -1;
+          }
+#endif
+#if MYNEWT_VAL(SPI_3_MASTER)
+        case 3:
+          switch (ss_pin) {
+            case 3:
+            case 8:
+            case 11:
+            case 12:
+            case 27:
+            case 35:
+            case 46:
+              return 0;
+            case 4:
+            case 7:
+            case 13:
+            case 20:
+            case 28:
+            case 36:
+            case 47:
+              return 1;
+            case 0:
+            case 10:
+            case 18:
+            case 21:
+            case 25:
+            case 29:
+            case 37:
+            case 48:
+              return 2;
+            case 2:
+            case 9:
+            case 19:
+            case 22:
+            case 26:
+            case 30:
+            case 34:
+            case 45:
+              return 3;
+            default:
+              return -1;
+          }
+#endif
+#if MYNEWT_VAL(SPI_4_MASTER)
+        case 4:
+          switch (ss_pin) {
+            case 3:
+            case 8:
+            case 12:
+            case 23:
+            case 27:
+            case 31:
+            case 46:
+              return 0;
+            case 4:
+            case 7:
+            case 13:
+            case 17:
+            case 20:
+            case 28:
+            case 36:
+              return 1;
+            case 0:
+            case 10:
+            case 14:
+            case 21:
+            case 25:
+            case 29:
+            case 37:
+              return 2;
+            case 2:
+            case 9:
+            case 22:
+            case 26:
+            case 30:
+            case 45:
+            case 49:
+              return 3;
+            default:
+              return -1;
+          }
+#endif
+#if MYNEWT_VAL(SPI_5_MASTER)
+        case 5:
+          switch (ss_pin) {
+            case 3:
+            case 8:
+            case 12:
+            case 16:
+            case 27:
+            case 42:
+            case 46:
+              return 0;
+            case 4:
+            case 7:
+            case 13:
+            case 20:
+            case 24:
+            case 28:
+            case 36:
+              return 1;
+            case 0:
+            case 10:
+            case 21:
+            case 25:
+            case 29:
+            case 33:
+            case 37:
+            case 44:
+              return 2;
+            case 2:
+            case 9:
+            case 22:
+            case 26:
+            case 30:
+            case 38:
+            case 45:
+              return 3;
+            default:
+              return -1;
+          }
+#endif
         default:
             return -1;
     }
 }
 
 static int
+hal_spi_pin_config(int spi_num, int master, const struct apollo3_spi_cfg *pins)
+{
+    if (master) {
+        return hal_spi_pin_config_master(spi_num, pins);
+    } else {
+        return hal_spi_pin_config_slave(spi_num, pins);
+    }
+}
+
+static int
+hal_spi_ss_pin_config(int spi_num, int master, int8_t ss_pin)
+{
+    if (master) {
+        return hal_spi_ss_pin_config_master(spi_num, ss_pin);
+    } else {
+        return hal_spi_ss_pin_config_slave(spi_num, ss_pin);
+    }
+}
+
+static int
+hal_spi_ss_pin_init(struct apollo3_spi *spi, int8_t ss_index, int8_t ss_pin)
+{
+  if (spi->ss_pin[ss_index] != ss_pin) {
+    int ss_pin_func_sel = hal_spi_ss_pin_config(spi->spi_num, 1, ss_pin);
+    if (ss_pin_func_sel != -1 && ss_index != -1) {
+      am_hal_gpio_pincfg_t spi_ss_cfg;
+
+      memset(&spi_ss_cfg, 0x0, sizeof(am_hal_gpio_pincfg_t));
+      spi_ss_cfg.uFuncSel = ss_pin_func_sel;
+      spi_ss_cfg.eDriveStrength = AM_HAL_GPIO_PIN_DRIVESTRENGTH_12MA;
+      spi_ss_cfg.eGPOutcfg = AM_HAL_GPIO_PIN_OUTCFG_PUSHPULL;
+      spi_ss_cfg.eGPInput = AM_HAL_GPIO_PIN_INPUT_NONE;
+      spi_ss_cfg.eIntDir = AM_HAL_GPIO_PIN_INTDIR_LO2HI;
+      spi_ss_cfg.uIOMnum = spi->spi_num;
+      spi_ss_cfg.uNCE = ss_index;
+      spi_ss_cfg.eCEpol = AM_HAL_GPIO_PIN_CEPOL_ACTIVELOW;
+      if (am_hal_gpio_pinconfig(ss_pin, spi_ss_cfg) != AM_HAL_STATUS_SUCCESS) {
+          return SYS_EINVAL;
+      }
+      spi->ss_pin[ss_index] = ss_pin;
+    } else {
+      return SYS_EINVAL;
+    }
+  }
+
+  return 0;
+}
+
+static int
 hal_spi_init_master(int spi_num, const struct apollo3_spi_cfg *cfg)
 {
     struct apollo3_spi *spi;
-    int pin_cfg;
-    am_hal_gpio_pincfg_t spi_sck_cfg, spi_miso_cfg, spi_mosi_cfg, spi_ss_cfg;
+    int spi_pin_func_sel;
+    am_hal_gpio_pincfg_t spi_sck_cfg, spi_miso_cfg, spi_mosi_cfg;
 
     spi = apollo3_spi_resolve(spi_num);
     if (spi == NULL) {
@@ -329,37 +683,52 @@ hal_spi_init_master(int spi_num, const struct apollo3_spi_cfg *cfg)
     }
 
     /* Configure the IOM pins. */
-    pin_cfg = hal_spi_pin_config(spi_num, 1, cfg);
-    if (pin_cfg == -1) {
+    spi_pin_func_sel = hal_spi_pin_config(spi_num, 1, cfg);
+    if (spi_pin_func_sel == -1) {
         return SYS_EINVAL;
     }
 
-    spi_ss_cfg.uFuncSel = 1; /* SS pin is always func 1 */
-    spi_ss_cfg.eDriveStrength = AM_HAL_GPIO_PIN_DRIVESTRENGTH_12MA;
-    spi_ss_cfg.eGPOutcfg = AM_HAL_GPIO_PIN_OUTCFG_PUSHPULL;
-    spi_ss_cfg.eGPInput = AM_HAL_GPIO_PIN_INPUT_NONE;
-    spi_ss_cfg.eIntDir = AM_HAL_GPIO_PIN_INTDIR_LO2HI;
-    spi_ss_cfg.uIOMnum = spi_num;
-    spi_ss_cfg.uNCE = get_uNCE(spi_num);
-    spi_ss_cfg.eCEpol = AM_HAL_GPIO_PIN_CEPOL_ACTIVELOW;
-    if (am_hal_gpio_pinconfig(cfg->ss_pin, spi_ss_cfg) != AM_HAL_STATUS_SUCCESS) {
-        return SYS_EINVAL;
+    for (int i = 0; i < 4; i++) {
+      int ss_pin_func_sel = hal_spi_ss_pin_config(spi_num, 1, cfg->ss_pin[i]);
+      if (ss_pin_func_sel != -1) {
+        am_hal_gpio_pincfg_t spi_ss_cfg;
+
+        memset(&spi_ss_cfg, 0x0, sizeof(am_hal_gpio_pincfg_t));
+        spi_ss_cfg.uFuncSel = ss_pin_func_sel;
+        spi_ss_cfg.eDriveStrength = AM_HAL_GPIO_PIN_DRIVESTRENGTH_12MA;
+        spi_ss_cfg.eGPOutcfg = AM_HAL_GPIO_PIN_OUTCFG_PUSHPULL;
+        spi_ss_cfg.eGPInput = AM_HAL_GPIO_PIN_INPUT_NONE;
+        spi_ss_cfg.eIntDir = AM_HAL_GPIO_PIN_INTDIR_LO2HI;
+        spi_ss_cfg.uIOMnum = spi_num;
+        spi_ss_cfg.uNCE = hal_spi_get_uNCE(spi_num, cfg->ss_pin[i]);
+        spi_ss_cfg.eCEpol = AM_HAL_GPIO_PIN_CEPOL_ACTIVELOW;
+        if (am_hal_gpio_pinconfig(cfg->ss_pin[i], spi_ss_cfg) != AM_HAL_STATUS_SUCCESS) {
+            return SYS_EINVAL;
+        }
+        spi->ss_pin[i] = cfg->ss_pin[i];
+        spi->cur_ss_pin = cfg->ss_pin[i];
+      } else {
+        spi->ss_pin[i] = -1;
+      }
     }
 
-    spi_sck_cfg.uFuncSel = pin_cfg;
+    memset(&spi_sck_cfg, 0x0, sizeof(am_hal_gpio_pincfg_t));
+    spi_sck_cfg.uFuncSel = spi_pin_func_sel;
     spi_sck_cfg.eDriveStrength = AM_HAL_GPIO_PIN_DRIVESTRENGTH_12MA;
     spi_sck_cfg.uIOMnum = spi_num;
     if (am_hal_gpio_pinconfig(cfg->sck_pin, spi_sck_cfg) != AM_HAL_STATUS_SUCCESS){
         return SYS_EINVAL;
     }
 
-    spi_miso_cfg.uFuncSel = pin_cfg;
+    memset(&spi_miso_cfg, 0x0, sizeof(am_hal_gpio_pincfg_t));
+    spi_miso_cfg.uFuncSel = spi_pin_func_sel;
     spi_miso_cfg.uIOMnum = spi_num;
     if (am_hal_gpio_pinconfig(cfg->miso_pin, spi_miso_cfg) != AM_HAL_STATUS_SUCCESS) {
         return SYS_EINVAL;
     }
 
-    spi_mosi_cfg.uFuncSel = pin_cfg;
+    memset(&spi_mosi_cfg, 0x0, sizeof(am_hal_gpio_pincfg_t));
+    spi_mosi_cfg.uFuncSel = spi_pin_func_sel;
     spi_mosi_cfg.eDriveStrength = AM_HAL_GPIO_PIN_DRIVESTRENGTH_12MA;
     spi_mosi_cfg.uIOMnum = spi_num;
     if (am_hal_gpio_pinconfig(cfg->mosi_pin, spi_mosi_cfg) != AM_HAL_STATUS_SUCCESS) {
@@ -370,6 +739,7 @@ hal_spi_init_master(int spi_num, const struct apollo3_spi_cfg *cfg)
     hal_spi_enable(spi_num);
 
     spi->spi_num = spi_num;
+    spi->cont_tx = false;
     spi->spi_type = HAL_SPI_TYPE_MASTER;
 
     return 0;
@@ -379,6 +749,34 @@ static int
 hal_spi_init_slave(int spi_num, struct apollo3_spi_cfg *cfg)
 {
     return SYS_ERANGE;
+}
+
+int apollo3_spi_set_ss_pin(int spi_num, int8_t ss_pin)
+{
+  struct apollo3_spi *spi;
+
+  spi = apollo3_spi_resolve(spi_num);
+  if (spi == NULL) {
+      return SYS_EINVAL;
+  }
+
+  spi->cur_ss_pin = ss_pin;
+
+  return 0;
+}
+
+int apollo3_spi_set_continuation(int spi_num, bool cont)
+{
+  struct apollo3_spi *spi;
+
+  spi = apollo3_spi_resolve(spi_num);
+  if (spi == NULL) {
+      return SYS_EINVAL;
+  }
+
+  spi->cont_tx = cont;
+
+  return 0;
 }
 
 /**
@@ -421,6 +819,30 @@ hal_spi_init(int spi_num, void *cfg, uint8_t spi_type)
     }
 
     return 0;
+}
+
+int
+hal_spi_init_hw(uint8_t spi_num, uint8_t spi_type,
+                const struct hal_spi_hw_settings *cfg)
+{
+    struct apollo3_spi_cfg hal_cfg;
+
+    hal_cfg.sck_pin = cfg->pin_sck;
+    hal_cfg.mosi_pin = cfg->pin_mosi;
+    hal_cfg.miso_pin = cfg->pin_miso;
+    for (int i = 0; i < 4; i++) {
+      hal_cfg.ss_pin[i] = -1;
+    }
+    if (spi_type == HAL_SPI_TYPE_MASTER) {
+      int spi_index = hal_spi_get_uNCE(spi_num, cfg->pin_ss);
+      if (spi_index != -1) {
+        hal_cfg.ss_pin[spi_index] = cfg->pin_ss;
+      }
+    } else {
+      hal_cfg.ss_pin[0] = cfg->pin_ss;
+    }
+
+    return hal_spi_init(spi_num, &hal_cfg, spi_type);
 }
 
 /**
@@ -516,8 +938,8 @@ hal_spi_disable(int spi_num)
 uint16_t
 hal_spi_tx_val(int spi_num, uint16_t val)
 {
-    struct apollo3_spi *spi;
     am_hal_iom_transfer_t Transaction;
+    struct apollo3_spi *spi;
     uint32_t tx_buf = val;
     uint32_t rx_buf = 0xffff;
 
@@ -526,18 +948,19 @@ hal_spi_tx_val(int spi_num, uint16_t val)
         return SYS_EINVAL;
     }
 
-    Transaction.ui32InstrLen    = 0;
-    Transaction.ui32Instr       = 0;
+    int ss_pin_index = hal_spi_get_uNCE(spi_num, spi->cur_ss_pin);
+    if (hal_spi_ss_pin_init(spi, ss_pin_index, spi->cur_ss_pin) != 0) {
+        return SYS_EINVAL;
+    }
+
+    memset(&Transaction, 0x0, sizeof(am_hal_iom_transfer_t ));
     Transaction.eDirection      = AM_HAL_IOM_FULLDUPLEX;
     Transaction.ui32NumBytes    = sizeof(val);
     Transaction.pui32TxBuffer   = &tx_buf;
     Transaction.pui32RxBuffer   = &rx_buf;
-    Transaction.bContinue       = false;
-    Transaction.ui8RepeatCount  = 0;
-    Transaction.ui32PauseCondition = 0;
-    Transaction.ui32StatusSetClr = 0;
+    Transaction.bContinue       = spi->cont_tx;
 
-    Transaction.uPeerInfo.ui32SpiChipSelect = get_uNCE(spi_num);
+    Transaction.uPeerInfo.ui32SpiChipSelect = ss_pin_index;
     
     if (am_hal_iom_spi_blocking_fullduplex(spi->spi_handle, &Transaction) != AM_HAL_STATUS_SUCCESS) {
         return 0xffff;
@@ -594,7 +1017,7 @@ hal_spi_set_txrx_cb(int spi_num, hal_spi_txrx_cb txrx_cb, void *arg)
 int
 hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int num_bytes)
 {
-    am_hal_iom_transfer_t       Transaction;
+    am_hal_iom_transfer_t Transaction;
     struct apollo3_spi *spi;
 
     spi = apollo3_spi_resolve(spi_num);
@@ -602,18 +1025,19 @@ hal_spi_txrx(int spi_num, void *txbuf, void *rxbuf, int num_bytes)
         return SYS_EINVAL;
     }
 
-    Transaction.ui32InstrLen    = 0;
-    Transaction.ui32Instr       = 0;
+    int ss_pin_index = hal_spi_get_uNCE(spi_num, spi->cur_ss_pin);
+    if (hal_spi_ss_pin_init(spi, ss_pin_index, spi->cur_ss_pin) != 0) {
+        return SYS_EINVAL;
+    }
+
+    memset(&Transaction, 0x0, sizeof(am_hal_iom_transfer_t ));
     Transaction.eDirection      = AM_HAL_IOM_FULLDUPLEX;
     Transaction.ui32NumBytes    = num_bytes;
     Transaction.pui32TxBuffer   = txbuf;
     Transaction.pui32RxBuffer   = rxbuf;
-    Transaction.bContinue       = false;
-    Transaction.ui8RepeatCount  = 0;
-    Transaction.ui32PauseCondition = 0;
-    Transaction.ui32StatusSetClr = 0;
+    Transaction.bContinue       = spi->cont_tx;
 
-    Transaction.uPeerInfo.ui32SpiChipSelect = get_uNCE(spi_num);
+    Transaction.uPeerInfo.ui32SpiChipSelect = ss_pin_index;
 
     return am_hal_iom_spi_blocking_fullduplex(spi->spi_handle, &Transaction);
 }
@@ -685,4 +1109,4 @@ hal_spi_abort(int spi_num)
     return SYS_ERANGE;
 }
 
-#endif /* SPI_ANY_ENABLED */
+#endif /* SPI_MASTER_ANY_ENABLED || SPI_SLAVE_ANY_ENABLED */

@@ -30,24 +30,24 @@ struct hal_flash;
 extern const struct hal_flash apollo3_flash_dev;
 
 struct apollo3_uart_cfg {
-    uint8_t suc_pin_tx;
-    uint8_t suc_pin_rx;
-    uint8_t suc_pin_rts;
-    uint8_t suc_pin_cts;
+    int8_t suc_pin_tx;
+    int8_t suc_pin_rx;
+    int8_t suc_pin_rts;
+    int8_t suc_pin_cts;
 };
 
 /* SPI configuration (used for both master and slave) */
 struct apollo3_spi_cfg {
-    uint8_t sck_pin;
-    uint8_t mosi_pin;
-    uint8_t miso_pin;
-    uint8_t ss_pin;
+    int8_t sck_pin;
+    int8_t mosi_pin;
+    int8_t miso_pin;
+    int8_t ss_pin[4];
 };
 
 /* I2C configuration (used for both master and slave) */
 struct apollo3_i2c_cfg {
-    uint8_t scl_pin;
-    uint8_t sda_pin;
+    int8_t scl_pin;
+    int8_t sda_pin;
 };
 
 #define APOLLO3_TIMER_SOURCE_HFRC       1 /* High-frequency RC oscillator. */
@@ -59,6 +59,11 @@ struct apollo3_i2c_cfg {
 struct apollo3_timer_cfg {
     uint8_t source;
 };
+
+void apollo3_periph_create(void);
+
+int apollo3_spi_set_ss_pin(int spi_num, int8_t ss_pin);
+int apollo3_spi_set_continuation(int spi_num, bool cont);
 
 #ifdef __cplusplus
 }
